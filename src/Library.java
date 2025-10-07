@@ -1,0 +1,77 @@
+import model.Book;
+import model.BorrowRecord;
+import model.Reader;
+
+import java.time.LocalDate;
+import java.util.*;
+
+public class Library {
+    private final List<Book> books;
+    private final List<Reader> readers;
+    private final List<BorrowRecord> records;
+
+    public Library() {
+        books = new ArrayList<>();
+        readers = new ArrayList<>();
+        records = new ArrayList<>();
+    }
+
+    public void addBook(Book book) { books.add(book); }
+    public void addReader(Reader reader) { readers.add(reader); }
+
+    public List<Book> searchByTitle(String keyword) {
+        List<Book> result = new ArrayList<>();
+        for (Book b : books)
+            if (b.getTitle().toLowerCase().contains(keyword.toLowerCase()))
+                result.add(b);
+        return result;
+    }
+
+    public void borrowBook(Reader reader, Book book) {
+        if (book.getAvailableCopies() > 0) {
+            book.borrow();
+            reader.borrowBook(book);
+            records.add(new BorrowRecord(reader.getId(), book.getIsbn(), LocalDate.now(), null,false));
+            System.out.println(reader.getName() + " borrowed " + book.getTitle());
+        } else {
+            System.out.println("No copies available for " + book.getTitle());
+        }
+    }
+
+    public void returnBook(Reader reader, Book book) {
+        for (BorrowRecord r : records) {
+            if (r.getReaderId()== reader.getId() && r.getIsbn().equals(book.getIsbn()) && r.getDueDate() == null) {
+                r.setDueDate(LocalDate.now());
+                book.returnBook();
+                reader.returnBook(book);
+                System.out.println(reader.getName() + " returned " + book.getTitle());
+                break;
+            }
+        }
+    }
+
+    public void showTopBorrowedBooks() {
+        Map<String, Integer> borrowCount = new HashMap<>();
+        for (BorrowRecord r : records) {
+            borrowCount.put(r.getBook().getTitle(), borrowCount.getOrDefault(r.getBook().getTitle(), 0) + 1);
+        }
+        borrowCount.entrySet().stream()
+                .sorted((a, b) -> b.getValue() - a.getValue())
+                .limit(3)
+                .forEach(e -> System.out.println(e.getKey() + " - " + e.getValue() + " times"));
+    }
+
+    public Reader findReaderById(int id) {
+        for (Reader r : readers)
+            if (r.getId() == id)
+                return r;
+        return null;
+    }
+
+    public void showAllReaders() {
+        for (Reader r : readers) {
+            System.out.println(r);
+        }
+    }
+
+}
