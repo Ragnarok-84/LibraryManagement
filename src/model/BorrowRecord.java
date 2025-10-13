@@ -1,12 +1,13 @@
 package model;
 
 import java.time.LocalDate;
+import dao.BookDAO; // giả sử bạn có BookDAO
 
 public class BorrowRecord {
     private final int readerId;
     private final String isbn;
     private final LocalDate borrowDate;
-    private  LocalDate dueDate;
+    private LocalDate dueDate;
     private boolean returned;
 
     public BorrowRecord(int readerId, String isbn, LocalDate borrowDate, LocalDate dueDate, boolean returned) {
@@ -30,9 +31,15 @@ public class BorrowRecord {
         returned = true;
     }
 
+
+    public Book getBook() {
+        BookDAO dao = new BookDAO();
+        return dao.findByISBN(isbn);
+    }
+
+
     @Override
     public String toString() {
         return readerId + " mượn " + isbn + " (" + borrowDate + " → " + dueDate + ")" + (returned ? " ✅" : " ❌");
     }
-
 }
