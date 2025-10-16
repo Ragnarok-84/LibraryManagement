@@ -28,10 +28,13 @@ public class Library {
     }
 
     public void borrowBook(Reader reader, Book book) {
-        if (book.getAvailableCopies() > 0) {
+        if (book.getAvailable() > 0) {
             book.borrow();
-            reader.borrowBook(book);
-            records.add(new BorrowRecord(reader.getId(), book.getIsbn(), LocalDate.now(), null,false));
+            BorrowRecord record = new BorrowRecord();
+            record.setReader(reader);
+            record.setBook(book);
+            record.setBorrowDate(LocalDate.now());
+            records.add(record);
             System.out.println(reader.getName() + " borrowed " + book.getTitle());
         } else {
             System.out.println("No copies available for " + book.getTitle());
@@ -40,10 +43,9 @@ public class Library {
 
     public void returnBook(Reader reader, Book book) {
         for (BorrowRecord r : records) {
-            if (r.getReaderId()== reader.getId() && r.getIsbn().equals(book.getIsbn()) && r.getDueDate() == null) {
-                r.setDueDate(LocalDate.now());
+            if (r.getReader() != null && r.getBook() != null && r.getReader().getId().equals(reader.getId()) && r.getBook().getIsbn().equals(book.getIsbn()) && r.getReturnDate() == null) {
+                r.setReturnDate(LocalDate.now());
                 book.returnBook();
-                reader.returnBook(book);
                 System.out.println(reader.getName() + " returned " + book.getTitle());
                 break;
             }
@@ -61,9 +63,9 @@ public class Library {
                 .forEach(e -> System.out.println(e.getKey() + " - " + e.getValue() + " times"));
     }
 
-    public Reader findReaderById(int id) {
+    public Reader findReaderById(String id) {
         for (Reader r : readers)
-            if (r.getId() == id)
+            if (r.getId().equals(id))
                 return r;
         return null;
     }

@@ -36,8 +36,9 @@ public class LibraryApp {
     private static void seedData() {
         books.add(new Book("001", "Clean Code", "Robert Martin", 2008, 3));
         books.add(new Book("002", "Effective Java", "Joshua Bloch", 2018, 2));
-        readers.add(new Reader(20235128, "Nguyen Kien", "kientoan1chy@gmail.com"));
-        readers.add(new Reader(20245238, "Tran Mai", "maitran@gmail.com"));
+        Reader r1 = new Reader(); r1.setId("DG001"); r1.setName("Nguyen Kien"); r1.setEmail("kientoan1chy@gmail.com");
+        Reader r2 = new Reader(); r2.setId("DG002"); r2.setName("Tran Mai"); r2.setEmail("maitran@gmail.com");
+        readers.add(r1); readers.add(r2);
     }
 
     private static void listBooks() {
@@ -47,29 +48,35 @@ public class LibraryApp {
 
     private static void borrowBook() {
         System.out.print("Nhập ID độc giả: ");
-        int rid = Integer.parseInt(sc.nextLine());
+        String rid = sc.nextLine();
         System.out.print("Nhập ISBN sách: ");
         String isbn = sc.nextLine();
 
         Book b = books.stream().filter(x -> x.getIsbn().equals(isbn)).findFirst().orElse(null);
-        if (b == null || b.getAvailableCopies() == 0) {
+        if (b == null || b.getAvailable() == 0) {
             System.out.println("Không tìm thấy hoặc sách đã hết!");
             return;
         }
         b.borrow();
-        records.add(new BorrowRecord(rid, isbn, LocalDate.now(), LocalDate.now().plusDays(14), false));
+        BorrowRecord rec = new BorrowRecord();
+        Reader reader = readers.stream().filter(x -> x.getId().equals(rid)).findFirst().orElse(null);
+        rec.setReader(reader);
+        rec.setBook(b);
+        rec.setBorrowDate(LocalDate.now());
+        rec.setDueDate(LocalDate.now().plusDays(14));
+        records.add(rec);
         System.out.println("Mượn thành công!");
     }
 
     private static void returnBook() {
         System.out.print("Nhập ID độc giả: ");
-        int rid = Integer.parseInt(sc.nextLine());
+        String rid = sc.nextLine();
         System.out.print("Nhập ISBN sách: ");
         String isbn = sc.nextLine();
 
         for (BorrowRecord r : records) {
-            if (r.getReaderId() == rid && r.getIsbn().equals(isbn) && !r.isReturned()) {
-                r.markReturned();
+            if (r.getReader() != null && r.getBook() != null && r.getReader().getId().equals(rid) && r.getBook().getIsbn().equals(isbn) && r.getReturnDate() == null) {
+                r.setReturnDate(LocalDate.now());
                 books.stream()
                         .filter(b -> b.getIsbn().equals(isbn))
                         .findFirst()

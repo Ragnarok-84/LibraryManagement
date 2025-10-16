@@ -4,7 +4,7 @@ import java.util.*;
 import model.Reader;
 
 public class ReaderManager {
-    private final Map<Integer, Reader> readerMap; // Dễ tra cứu theo ID
+    private final Map<String, Reader> readerMap; // Dễ tra cứu theo ID
 
     public ReaderManager() {
         this.readerMap = new HashMap<>();
@@ -21,7 +21,7 @@ public class ReaderManager {
     }
 
     // ✅ Xóa độc giả theo ID
-    public void removeReader(int id) {
+    public void removeReader(String id) {
         if (readerMap.remove(id) != null) {
             System.out.println("✅ Đã xóa độc giả có ID " + id);
         } else {
@@ -30,7 +30,7 @@ public class ReaderManager {
     }
 
     // ✅ Tìm độc giả theo ID
-    public Reader findReaderById(int id) {
+    public Reader findReaderById(String id) {
         return readerMap.get(id);
     }
 

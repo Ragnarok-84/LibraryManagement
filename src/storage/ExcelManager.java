@@ -33,7 +33,7 @@ public class ExcelManager {
             r.createCell(1).setCellValue(b.getTitle());
             r.createCell(2).setCellValue(b.getAuthor());
             r.createCell(3).setCellValue(b.getYear());
-            r.createCell(4).setCellValue(b.getAvailableCopies());
+            r.createCell(4).setCellValue(b.getAvailable());
             r.createCell(5).setCellValue(b.getBorrowedCount());
         }
 
@@ -61,11 +61,11 @@ public class ExcelManager {
         int recid = 1;
         for (BorrowRecord r : records) {
             Row row = recordSheet.createRow(recid++);
-            row.createCell(0).setCellValue(r.getReaderId());
-            row.createCell(1).setCellValue(r.getIsbn());
-            row.createCell(2).setCellValue(r.getBorrowDate().toString());
-            row.createCell(3).setCellValue(r.getDueDate().toString());
-            row.createCell(4).setCellValue(r.isReturned() ? "Yes" : "No");
+            row.createCell(0).setCellValue(r.getReader() == null ? "" : r.getReader().getId());
+            row.createCell(1).setCellValue(r.getBook() == null ? "" : r.getBook().getIsbn());
+            row.createCell(2).setCellValue(r.getBorrowDate() == null ? "" : r.getBorrowDate().toString());
+            row.createCell(3).setCellValue(r.getDueDate() == null ? "" : r.getDueDate().toString());
+            row.createCell(4).setCellValue(r.getReturnDate() == null ? "No" : "Yes");
         }
 
         try (FileOutputStream fos = new FileOutputStream(FILE_PATH)) {

@@ -1,45 +1,32 @@
 package model;
 
 import java.time.LocalDate;
-import dao.BookDAO; // giả sử bạn có BookDAO
 
 public class BorrowRecord {
-    private final int readerId;
-    private final String isbn;
-    private final LocalDate borrowDate;
+    private Reader reader;
+    private Book book;
+    private LocalDate borrowDate;
     private LocalDate dueDate;
-    private boolean returned;
+    private LocalDate returnDate;
 
-    public BorrowRecord(int readerId, String isbn, LocalDate borrowDate, LocalDate dueDate, boolean returned) {
-        this.readerId = readerId;
-        this.isbn = isbn;
-        this.borrowDate = borrowDate;
-        this.dueDate = dueDate;
-        this.returned = returned;
-    }
+    public Reader getReader() { return reader; }
+    public void setReader(Reader reader) { this.reader = reader; }
 
-    public int getReaderId() { return readerId; }
-    public String getIsbn() { return isbn; }
+    public Book getBook() { return book; }
+    public void setBook(Book book) { this.book = book; }
+
     public LocalDate getBorrowDate() { return borrowDate; }
+    public void setBorrowDate(LocalDate borrowDate) { this.borrowDate = borrowDate; }
+
     public LocalDate getDueDate() { return dueDate; }
-    public boolean isReturned() { return returned; }
-    public void setDueDate(LocalDate dueDate){
-        this.dueDate = dueDate;
-    }
+    public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
 
-    public void markReturned() {
-        returned = true;
-    }
+    public LocalDate getReturnDate() { return returnDate; }
+    public void setReturnDate(LocalDate returnDate) { this.returnDate = returnDate; }
 
-
-    public Book getBook() {
-        BookDAO dao = new BookDAO();
-        return dao.findByISBN(isbn);
-    }
-
-
-    @Override
-    public String toString() {
-        return readerId + " mượn " + isbn + " (" + borrowDate + " → " + dueDate + ")" + (returned ? " ✅" : " ❌");
+    public String getStatus() {
+        if (returnDate != null) return "Đã trả";
+        if (dueDate != null && dueDate.isBefore(LocalDate.now())) return "Quá hạn";
+        return "Đang mượn";
     }
 }

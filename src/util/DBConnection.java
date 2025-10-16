@@ -5,21 +5,62 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DBConnection {
-    private static final String URL = "jdbc:mysql://localhost:3306/library_management";
-    private static final String USER = "root";       // thay bằng tài khoản MySQL của bạn
-    private static final String PASSWORD = "kien1992005t1chy"; // thay bằng mật khẩu MySQL của bạn
+    // Defaults (can be overridden by environment variables below)
+    private static final String DEFAULT_URL = "jdbc:mysql://localhost:3306/library_management?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=utf8";
+    private static final String DEFAULT_USER = "root";
+    private static final String DEFAULT_PASSWORD = "";
 
-    private static Connection connection;
+    private static volatile Connection connection;
 
-    public static Connection getConnection() {
-        if (connection == null) {
+    private static String getEnvOrDefault(String key, String fallback) {
+        String v = System.getenv(key);
+        return v != null && !v.isBlank() ? v : fallback;
+    }
+
+    private static synchronized void openConnectionIfNeeded() throws SQLException {
+        if (connection != null) {
             try {
-                connection = DriverManager.getConnection(URL, USER, PASSWORD);
-                System.out.println(" Kết nối MySQL thành công!");
-            } catch (SQLException e) {
-                System.err.println(" Lỗi kết nối MySQL: " + e.getMessage());
+                if (!connection.isClosed() && connection.isValid(2)) {
+                    return;
+                }
+            } catch (SQLException ignored) {
+                // will reopen below
             }
         }
-        return connection;
+
+        String url = getEnvOrDefault("DB_URL", DEFAULT_URL);
+        String user = getEnvOrDefault("DB_USER", DEFAULT_USER);
+        String pass = getEnvOrDefault("DB_PASSWORD", DEFAULT_PASSWORD);
+
+        try {
+            // Ensure MySQL driver is loaded (useful in some runtime environments)
+            Class.forName("com.mysql.cj.jdbc.Driver");
+        } catch (ClassNotFoundException ignored) {
+            // DriverManager will still try via SPI if available on classpath
+        }
+
+        connection = DriverManager.getConnection(url, user, pass);
+        System.out.println("✅ Đã kết nối MySQL: " + url);
+    }
+
+    public static Connection getConnection() {
+        try {
+            openConnectionIfNeeded();
+            return connection;
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi kết nối MySQL: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public static synchronized void closeQuietly() {
+        if (connection != null) {
+            try {
+                connection.close();
+            } catch (SQLException ignored) {
+            } finally {
+                connection = null;
+            }
+        }
     }
 }
