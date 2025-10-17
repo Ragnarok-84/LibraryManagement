@@ -7,6 +7,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import static util.DBConnection.getConnection;
+
 public class BookDAO {
 
     /*
@@ -112,7 +114,7 @@ public class BookDAO {
     public void addBook(Book book) {
         final String SQL = "INSERT INTO books (isbn, title, author, publisher, category, year, total, available, isbn13, language_code, num_pages, average_rating, ratings_count, text_reviews_count, publication_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        try (Connection conn = DBConnection.getConnection();
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(SQL)) {
 
             stmt.setString(1, book.getIsbn());
@@ -158,7 +160,7 @@ public class BookDAO {
 
         List<Book> books = new ArrayList<>();
 
-        try (Connection conn = DBConnection.getConnection();
+        try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(SQL)) {
 
@@ -179,7 +181,7 @@ public class BookDAO {
         // Cần liệt kê tất cả các cột
         final String SQL = "SELECT id, isbn, title, author, publisher, category, year, total, available, isbn13, language_code, num_pages, average_rating, ratings_count, text_reviews_count, publication_date FROM books WHERE isbn = ?";
 
-        try (Connection conn = DBConnection.getConnection();
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(SQL)) {
 
             stmt.setString(1, isbn);
@@ -201,7 +203,7 @@ public class BookDAO {
     public void updateBook(Book book) {
         final String SQL = "UPDATE books SET title=?, author=?, publisher=?, category=?, year=?, total=?, available=?, isbn13=?, language_code=?, num_pages=?, average_rating=?, ratings_count=?, text_reviews_count=?, publication_date=? WHERE isbn=?";
 
-        try (Connection conn = DBConnection.getConnection();
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(SQL)) {
 
             stmt.setString(1, book.getTitle());
@@ -248,7 +250,7 @@ public class BookDAO {
         final String SQL = "SELECT id, isbn, title, author, publisher, category, year, total, available, isbn13, language_code, num_pages, average_rating, ratings_count, text_reviews_count, publication_date FROM books " +
                 "WHERE LOWER(title) LIKE ? OR LOWER(author) LIKE ? OR LOWER(isbn) LIKE ? ORDER BY title ASC";
 
-        try (Connection conn = DBConnection.getConnection();
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(SQL)) {
 
             // Bind giá trị cho cả 3 dấu ? (vì chúng đều dùng cùng một chuỗi tìm kiếm)
@@ -267,6 +269,50 @@ public class BookDAO {
         }
         return books;
     }
+
+
+    public String getBookTitleById (int bookID) {
+        final String SQL = "SELECT title FROM readers WHERE bookID = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(SQL)) {
+
+            stmt.setInt(1, bookID );
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("name");
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi SQL khi lấy tên độc giả: " + e.getMessage());
+        }
+
+        return "(Không rõ)"; // trả về mặc định nếu không tìm thấy
+    }
+
+    public int countBooks() {
+        String sql = "SELECT COUNT(*) FROM books";
+        int count = 0;
+
+        try (Connection con = getConnection(); // Lấy kết nối
+             Statement stmt = con.createStatement(); // Tạo Statement
+             ResultSet rs = stmt.executeQuery(sql)) { // Thực thi truy vấn
+
+            if (rs.next()) {
+                // Lấy giá trị từ cột đầu tiên (COUNT(*))
+                count = rs.getInt(1);
+            }
+
+        } catch (Exception e) {
+            // Xử lý lỗi kết nối hoặc truy vấn (ví dụ: ghi log)
+            System.err.println("Lỗi khi đếm số sách: " + e.getMessage());
+            // Trả về 0 nếu có lỗi xảy ra
+            count = 0;
+        }
+        return count;
+    }
+
 
 
 }

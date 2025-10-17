@@ -4,7 +4,7 @@ import java.time.LocalDate;
 
 public class Reader {
     private int readerID;          // Khóa chính, INT
-    private String fullName;       // Tên đầy đủ
+    private String name;       // Tên đầy đủ
     private String email;
     private String phone;
     private String address;
@@ -13,9 +13,9 @@ public class Reader {
 
     public Reader() {}
 
-    public Reader(int readerID, String fullName, String email, String phone, String address, LocalDate joinDate, boolean active) {
+    public Reader(int readerID, String name, String email, String phone, String address, LocalDate joinDate, boolean active) {
         this.readerID = readerID;
-        this.fullName = fullName;
+        this.name = name;
         this.email = email;
         this.phone = phone;
         this.address = address;
@@ -24,8 +24,8 @@ public class Reader {
     }
 
     // Constructor rút gọn (thêm mới)
-    public Reader(String fullName, String email, String phone, String address) {
-        this.fullName = fullName;
+    public Reader(String name, String email, String phone, String address) {
+        this.name = name;
         this.email = email;
         this.phone = phone;
         this.address = address;
@@ -42,12 +42,12 @@ public class Reader {
         this.readerID = readerID;
     }
 
-    public String getFullName() {
-        return fullName;
+    public String getName() {
+        return name;
     }
 
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getEmail() {
@@ -93,6 +93,6 @@ public class Reader {
     // ===== UI-friendly output =====
     @Override
     public String toString() {
-        return readerID + " - " + fullName + (active ? " (Hoạt động)" : " (Ngưng)");
+        return readerID + " - " + name + (active ? " (Hoạt động)" : " (Ngưng)");
     }
 }

@@ -4,7 +4,7 @@ import java.util.*;
 import model.Reader;
 
 public class ReaderManager {
-    private final Map<String, Reader> readerMap; // Dễ tra cứu theo ID
+    private final Map< Integer , Reader> readerMap; // Dễ tra cứu theo ID
 
     public ReaderManager() {
         this.readerMap = new HashMap<>();
@@ -12,10 +12,10 @@ public class ReaderManager {
 
     // ✅ Thêm độc giả mới
     public void addReader(Reader reader) {
-        if (readerMap.containsKey(reader.getId())) {
+        if (readerMap.containsKey(reader.getReaderID())) {
             System.out.println("❌ ID đã tồn tại! Không thể thêm độc giả mới.");
         } else {
-            readerMap.put(reader.getId(), reader);
+            readerMap.put(reader.getReaderID(), reader);
             System.out.println("✅ Đã thêm độc giả: " + reader.getName());
         }
     }
@@ -41,7 +41,7 @@ public class ReaderManager {
         } else {
             System.out.println("📚 Danh sách độc giả:");
             for (Reader r : readerMap.values()) {
-                System.out.println("ID: " + r.getId() +
+                System.out.println("ID: " + r.getReaderID() +
                         " | Tên: " + r.getName() +
                         " | Email: " + r.getEmail());
             }

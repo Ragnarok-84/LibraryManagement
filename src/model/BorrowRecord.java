@@ -3,7 +3,7 @@ package model;
 import java.time.LocalDate;
 
 public class BorrowRecord {
-    private long recordID;          // Khóa chính
+    private int recordID;          // Khóa chính
     private int readerID;           // Khóa ngoại -> readers(readerID)
     private int bookID;             // Khóa ngoại -> books(bookID)
 
@@ -25,7 +25,7 @@ public class BorrowRecord {
         this.status = "borrowed";
     }
 
-    public BorrowRecord(long recordID, int readerID, int bookID, LocalDate borrowDate, LocalDate dueDate, LocalDate returnDate, String status) {
+    public BorrowRecord(int recordID, int readerID, int bookID, LocalDate borrowDate, LocalDate dueDate, LocalDate returnDate, String status) {
         this.recordID = recordID;
         this.readerID = readerID;
         this.bookID = bookID;
@@ -36,11 +36,11 @@ public class BorrowRecord {
     }
 
     // ===== Getter / Setter =====
-    public long getRecordID() {
+    public int getRecordID() {
         return recordID;
     }
 
-    public void setRecordID(long recordID) {
+    public void setRecordID(int recordID) {
         this.recordID = recordID;
     }
 
@@ -117,7 +117,7 @@ public class BorrowRecord {
     @Override
     public String toString() {
         String bookTitle = (book != null) ? book.getTitle() : ("Book#" + bookID);
-        String readerName = (reader != null) ? reader.getFullName() : ("Reader#" + readerID);
+        String readerName = (reader != null) ? reader.getName() : ("Reader#" + readerID);
         return "Record #" + recordID + " | " + readerName + " → " + bookTitle + " | " + getStatus();
     }
 }

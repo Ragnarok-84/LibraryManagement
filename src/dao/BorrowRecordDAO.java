@@ -6,7 +6,9 @@ import util.DBConnection;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class BorrowRecordDAO {
 
@@ -92,6 +94,27 @@ public class BorrowRecordDAO {
     }
 
     // ===============================================================
+    // ✅ 3️⃣.1 MARK RETURNED: Dành cho UI gọi khi ấn nút "Trả sách"
+    // ===============================================================
+    public void markReturned(int recordID) {
+        final String SQL = "UPDATE borrow_records SET return_date = CURDATE(), status = 'Đã trả' WHERE recordID = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(SQL)) {
+
+            stmt.setInt(1, recordID);
+            int affected = stmt.executeUpdate();
+            if (affected > 0) {
+                System.out.println("✅ Đánh dấu trả sách thành công cho recordID=" + recordID);
+            } else {
+                System.out.println("⚠️ Không tìm thấy recordID: " + recordID);
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi SQL khi đánh dấu trả sách: " + e.getMessage());
+        }
+    }
+
+    // ===============================================================
     // 4️⃣ READ: Lấy lịch sử mượn của một độc giả
     // ===============================================================
     public List<BorrowRecord> getRecordsByReader(int readerID) {
@@ -130,4 +153,108 @@ public class BorrowRecordDAO {
             System.err.println("❌ Lỗi SQL khi xóa bản ghi mượn: " + e.getMessage());
         }
     }
+
+    // ===============================================================
+// 6️⃣ REPORTS: Top sách và độc giả
+// ===============================================================
+    public Map<String, Integer> getTopBooks(int limit) {
+        Map<String, Integer> result = new LinkedHashMap<>();
+        final String SQL = """
+        SELECT b.title, COUNT(*) AS borrow_count
+        FROM borrow_records br
+        JOIN books b ON br.bookID = b.bookID
+        GROUP BY b.title
+        ORDER BY borrow_count DESC
+        LIMIT ?
+    """;
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(SQL)) {
+
+            stmt.setInt(1, limit);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    result.put(rs.getString("title"), rs.getInt("borrow_count"));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi SQL khi lấy top sách: " + e.getMessage());
+        }
+        return result;
+    }
+
+    public Map<String, Integer> getTopReaders(int limit) {
+        Map<String, Integer> result = new LinkedHashMap<>();
+        final String SQL = """
+        SELECT r.name, COUNT(*) AS borrow_count
+        FROM borrow_records br
+        JOIN readers r ON br.readerID = r.id
+        GROUP BY r.name
+        ORDER BY borrow_count DESC
+        LIMIT ?
+    """;
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(SQL)) {
+
+            stmt.setInt(1, limit);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    result.put(rs.getString("name"), rs.getInt("borrow_count"));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi SQL khi lấy top độc giả: " + e.getMessage());
+        }
+        return result;
+    }
+
+    // ===============================================================
+// 7️⃣ COUNT & REPORT HELPERS
+// ===============================================================
+
+    // Đếm số lượt mượn đang hoạt động (chưa trả)
+    public int countBorrowing() {
+        final String SQL = "SELECT COUNT(*) FROM borrow_records WHERE return_date IS NULL";
+        try (Connection conn = DBConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(SQL)) {
+            if (rs.next()) return rs.getInt(1);
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi SQL khi đếm số lượt mượn: " + e.getMessage());
+        }
+        return 0;
+    }
+
+    // Lấy danh sách bản ghi quá hạn (chưa trả và quá due_date)
+    public List<BorrowRecord> getOverdueRecords() {
+        List<BorrowRecord> list = new ArrayList<>();
+        final String SQL = "SELECT * FROM borrow_records WHERE return_date IS NULL AND due_date < CURRENT_DATE ORDER BY due_date ASC";
+        try (Connection conn = DBConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(SQL)) {
+            while (rs.next()) list.add(mapRowToRecord(rs));
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi SQL khi lấy danh sách quá hạn: " + e.getMessage());
+        }
+        return list;
+    }
+
+    // Lấy các bản ghi gần đây nhất (dù trả hay chưa)
+    public List<BorrowRecord> getRecentRecords(int limit) {
+        List<BorrowRecord> list = new ArrayList<>();
+        final String SQL = "SELECT * FROM borrow_records ORDER BY borrow_date DESC LIMIT ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(SQL)) {
+            stmt.setInt(1, limit);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) list.add(mapRowToRecord(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi SQL khi lấy bản ghi gần đây: " + e.getMessage());
+        }
+        return list;
+    }
+
+
 }

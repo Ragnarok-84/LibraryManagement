@@ -43,7 +43,7 @@ public class Library {
 
     public void returnBook(Reader reader, Book book) {
         for (BorrowRecord r : records) {
-            if (r.getReader() != null && r.getBook() != null && r.getReader().getId().equals(reader.getId()) && r.getBook().getIsbn().equals(book.getIsbn()) && r.getReturnDate() == null) {
+            if (r.getReader() != null && r.getBook() != null && r.getReader().getReaderID() == reader.getReaderID() && r.getBook().getIsbn().equals(book.getIsbn()) && r.getReturnDate() == null) {
                 r.setReturnDate(LocalDate.now());
                 book.returnBook();
                 System.out.println(reader.getName() + " returned " + book.getTitle());
@@ -63,9 +63,9 @@ public class Library {
                 .forEach(e -> System.out.println(e.getKey() + " - " + e.getValue() + " times"));
     }
 
-    public Reader findReaderById(String id) {
+    public Reader findReaderById(int id) {
         for (Reader r : readers)
-            if (r.getId().equals(id))
+            if (r.getReaderID() == id)
                 return r;
         return null;
     }

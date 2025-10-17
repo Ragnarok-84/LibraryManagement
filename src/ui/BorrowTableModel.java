@@ -1,38 +1,60 @@
 package ui;
 
-
 import model.BorrowRecord;
+
 import javax.swing.table.AbstractTableModel;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
-
 public class BorrowTableModel extends AbstractTableModel {
-    private final String[] cols = {"Độc giả", "Sách", "Ngày mượn", "Hạn trả", "Trạng thái"};
-    private final List<BorrowRecord> data;
-    private final DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private final String[] columns = {
+            "Mã phiếu", "Độc giả", "Sách", "Ngày mượn", "Hạn trả", "Ngày trả", "Trạng thái"
+    };
 
+    private List<BorrowRecord> records = new ArrayList<>();
 
-    public BorrowTableModel(List<BorrowRecord> data) { this.data = data; }
+    public void setRecords(List<BorrowRecord> records) {
+        this.records = records != null ? records : new ArrayList<>();
+        fireTableDataChanged();
+    }
 
+    public BorrowRecord getRecordAt(int row) {
+        if (row >= 0 && row < records.size()) {
+            return records.get(row);
+        }
+        return null;
+    }
 
-    @Override public int getRowCount() { return data.size(); }
-    @Override public int getColumnCount() { return cols.length; }
-    @Override public String getColumnName(int c) { return cols[c]; }
+    @Override
+    public int getRowCount() {
+        return records.size();
+    }
 
+    @Override
+    public int getColumnCount() {
+        return columns.length;
+    }
 
-    @Override public Object getValueAt(int r, int c) {
-        BorrowRecord br = data.get(r);
-        return switch (c) {
-            case 0 -> br.getReader().getName();
-            case 1 -> br.getBook().getTitle();
-            case 2 -> br.getBorrowDate() == null ? "" : br.getBorrowDate().format(fmt);
-            case 3 -> br.getDueDate() == null ? "" : br.getDueDate().format(fmt);
-            case 4 -> br.getStatus();
+    @Override
+    public String getColumnName(int column) {
+        return columns[column];
+    }
+
+    @Override
+    public Object getValueAt(int rowIndex, int columnIndex) {
+        BorrowRecord r = records.get(rowIndex);
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        return switch (columnIndex) {
+            case 0 -> r.getRecordID(); // Mã phiếu (bổ sung trong model BorrowRecord)
+            case 1 -> r.getReader() != null ? r.getReader().getName() : "";
+            case 2 -> r.getBook() != null ? r.getBook().getTitle() : "";
+            case 3 -> r.getBorrowDate() != null ? fmt.format(r.getBorrowDate()) : "";
+            case 4 -> r.getDueDate() != null ? fmt.format(r.getDueDate()) : "";
+            case 5 -> r.getReturnDate() != null ? fmt.format(r.getReturnDate()) : "";
+            case 6 -> r.getStatus();
             default -> "";
         };
     }
-
-
-    public BorrowRecord getAt(int r) { return data.get(r); }
 }
