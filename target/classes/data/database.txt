@@ -1,0 +1,125 @@
+-- ====================================
+-- TẮT SAFE MODE (tránh lỗi 1175)
+-- ====================================
+SET SQL_SAFE_UPDATES = 0;
+
+-- ====================================
+-- XÓA & TẠO MỚI DATABASE
+-- ====================================
+DROP DATABASE IF EXISTS library_management;
+CREATE DATABASE library_management
+  DEFAULT CHARACTER SET utf8mb4
+  DEFAULT COLLATE utf8mb4_unicode_ci;
+USE library_management;
+
+-- ====================================
+-- BẢNG BOOKS
+-- ====================================
+DROP TABLE IF EXISTS books;
+CREATE TABLE books (
+  bookID              INT PRIMARY KEY,
+  title               TEXT,
+  authors             TEXT,
+  average_rating      DECIMAL(3,2),
+  isbn                VARCHAR(20),
+  isbn13              VARCHAR(20),
+  language_code       VARCHAR(16),
+  num_pages           INT,
+  ratings_count       INT,
+  text_reviews_count  INT,
+  publication_date    DATE,
+  publisher           VARCHAR(255),
+  UNIQUE KEY uk_isbn   (isbn),
+  UNIQUE KEY uk_isbn13 (isbn13),
+  KEY idx_title  (title(191))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ====================================
+-- NẠP DỮ LIỆU (DÙNG LOCAL)
+-- ⚠️ Đảm bảo file tồn tại tại đường dẫn bên dưới
+-- ====================================
+LOAD DATA LOCAL INFILE 'C:\\Users\\nqkie\\Downloads\\books.csv'
+INTO TABLE books
+CHARACTER SET utf8mb4
+FIELDS TERMINATED BY ','
+       ENCLOSED BY '"'
+       ESCAPED BY '\\'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(@bookID, @title, @authors,
+ @average_rating, @isbn, @isbn13, @language_code,
+ @num_pages, @ratings_count, @text_reviews_count,
+ @publication_date, @publisher)
+SET
+  bookID             = NULLIF(TRIM(@bookID), ''),
+  title              = NULLIF(TRIM(@title), ''),
+  authors            = NULLIF(TRIM(@authors), ''),
+  average_rating     = NULLIF(TRIM(@average_rating), ''),
+  isbn               = NULLIF(TRIM(@isbn), ''),
+  isbn13             = NULLIF(TRIM(@isbn13), ''),
+  language_code      = NULLIF(TRIM(@language_code), ''),
+  num_pages          = NULLIF(TRIM(@num_pages), ''),
+  ratings_count      = NULLIF(TRIM(@ratings_count), ''),
+  text_reviews_count = NULLIF(TRIM(@text_reviews_count), ''),
+  publication_date   = STR_TO_DATE(TRIM(@publication_date), '%m/%d/%Y'),
+  publisher          = NULLIF(TRIM(@publisher), '');
+
+-- ====================================
+-- CÁC CỘT BỔ SUNG
+-- ====================================
+ALTER TABLE books
+  ADD COLUMN author VARCHAR(255) AFTER title,
+  ADD COLUMN category VARCHAR(100) DEFAULT 'Unknown',
+  ADD COLUMN year INT NULL,
+  ADD COLUMN total INT NOT NULL DEFAULT 3,
+  ADD COLUMN available INT NOT NULL DEFAULT 3,
+  ADD COLUMN borrowed_count INT NOT NULL DEFAULT 0,
+  ADD KEY idx_author (author);
+
+-- ====================================
+-- CẬP NHẬT CỘT AUTHOR (TÁCH TỪ AUTHORS)
+-- ⚠️ Dùng subquery tạm để tránh lỗi 1093
+-- ====================================
+UPDATE books
+JOIN (
+    SELECT b2.bookID,
+           CASE
+             WHEN INSTR(b2.authors,'/')>0 THEN TRIM(SUBSTRING_INDEX(b2.authors,'/',1))
+             WHEN INSTR(b2.authors,',')>0 THEN TRIM(SUBSTRING_INDEX(b2.authors,',',1))
+             ELSE TRIM(b2.authors)
+           END AS new_author
+    FROM books b2
+) t ON books.bookID = t.bookID
+SET books.author = COALESCE(NULLIF(books.author,''), t.new_author);
+
+-- ====================================
+-- BẢNG READERS
+-- ====================================
+DROP TABLE IF EXISTS readers;
+CREATE TABLE readers (
+  id VARCHAR(32) PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  phone VARCHAR(32),
+  email VARCHAR(255),
+  address VARCHAR(255),
+  status VARCHAR(32)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ====================================
+-- BẢNG BORROW_RECORDS
+-- ====================================
+DROP TABLE IF EXISTS borrow_records;
+CREATE TABLE borrow_records (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  reader_id VARCHAR(32) NOT NULL,
+  isbn VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  borrow_date DATE NOT NULL,
+  due_date DATE,
+  return_date DATE,
+  CONSTRAINT fk_borrow_reader FOREIGN KEY (reader_id)
+      REFERENCES readers(id)
+      ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT fk_borrow_book FOREIGN KEY (isbn)
+      REFERENCES books(isbn)
+      ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

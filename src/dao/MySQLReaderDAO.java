@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MySQLReaderDAO {
-    
+    /*
     // === 1️⃣ Thêm độc giả mới ===
     public void addReader(Reader reader) {
         String sql = "INSERT INTO readers (id, name, phone, email, address, status) VALUES (?, ?, ?, ?, ?, ?)";
@@ -156,5 +156,5 @@ public class MySQLReaderDAO {
         reader.setStatus(rs.getString("status"));
         
         return reader;
-    }
+    }*/
 }

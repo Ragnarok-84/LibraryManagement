@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MySQLBorrowRecordDAO {
-    
+    /*
     // === 1️⃣ Tạo phiếu mượn mới ===
     public void addBorrowRecord(BorrowRecord record) {
         String sql = "INSERT INTO borrow_records (reader_id, isbn, borrow_date, due_date, return_date) VALUES (?, ?, ?, ?, ?)";
@@ -219,5 +219,5 @@ public class MySQLBorrowRecordDAO {
         record.setReturnDate(returnDate != null ? returnDate.toLocalDate() : null);
         
         return record;
-    }
+    }*/
 }

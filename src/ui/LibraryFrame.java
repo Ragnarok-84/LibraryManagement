@@ -1,6 +1,7 @@
 package ui;
 
 
+import dao.BookDAO;
 import model.Book;
 import model.Reader;
 import model.BorrowRecord;
@@ -22,7 +23,8 @@ public class LibraryFrame extends JFrame {
 
 
     // In-memory data (you can wire your DAO/Manager later)
-    private final List<Book> books = new ArrayList<>();
+    //private final List<Book> books = new ArrayList<>();
+    private final BookDAO books = new BookDAO();
     private final List<Reader> readers = new ArrayList<>();
     private final List<BorrowRecord> records = new ArrayList<>();
 
@@ -41,7 +43,7 @@ public class LibraryFrame extends JFrame {
         setLayout(new BorderLayout());
 
 
-        seedData();
+        //seedData();
         buildSidebar();
         buildPages();
         showPage("dashboard");
@@ -163,6 +165,8 @@ public class LibraryFrame extends JFrame {
         p.add(cap, BorderLayout.NORTH);
         return p;
     }
+
+    /*
     // ---------------- Books ----------------
     private JPanel buildBooks() {
         JPanel root = new JPanel(new BorderLayout(0, 12));
@@ -200,7 +204,83 @@ public class LibraryFrame extends JFrame {
         });
         reload.run();
         return root;
+    }*/
+
+
+    // Giả định: books đã được đổi tên thành bookDAO ở cấp lớp (ví dụ: private final BookDAO bookDAO = new BookDAO();)
+
+    private JPanel buildBooks() {
+        JPanel root = new JPanel(new BorderLayout(0, 12));
+        root.setOpaque(false);
+        JTextField search = new JTextField();
+        search.putClientProperty("JTextField.placeholderText", "Tìm kiếm theo tên sách, tác giả hoặc ISBN...");
+        JButton add = new JButton("+ Thêm sách mới");
+        add.setBackground(PRIMARY); add.setForeground(Color.WHITE);
+        JPanel top = new JPanel(new BorderLayout(8, 0));
+        top.add(search, BorderLayout.CENTER);
+        top.add(add, BorderLayout.EAST);
+        root.add(top, BorderLayout.NORTH);
+
+
+        String[] cols = {"Tên sách", "Tác giả", "ISBN", "NXB", "Tổng", "Khả dụng"};
+        JTable table = new JTable(new javax.swing.table.DefaultTableModel(cols, 0));
+        table.setFillsViewportHeight(true);
+        root.add(new JScrollPane(table), BorderLayout.CENTER);
+
+        // events
+        Runnable reload = () -> {
+            String q = search.getText(); // Lấy từ khóa tìm kiếm
+            javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) table.getModel();
+            model.setRowCount(0);
+
+            List<Book> booksFromDB;
+
+            if (q == null || q.trim().isEmpty()) {
+                // Nếu không có từ khóa, lấy TẤT CẢ từ Database
+                booksFromDB = books.getAllBooks();
+            } else {
+                // Nếu có từ khóa, dùng phương thức tìm kiếm tối ưu bằng SQL
+                booksFromDB = books.searchBooks(q.trim());
+            }
+
+            // Đổ dữ liệu đã lọc/tìm kiếm lên JTable
+            booksFromDB.forEach(b -> model.addRow(new Object[]{
+                    b.getTitle(),
+                    b.getAuthor(),
+                    b.getIsbn(),
+                    b.getPublisher(),
+                    b.getTotal(),
+                    b.getAvailable()
+            }));
+        };
+
+        search.getDocument().addDocumentListener(simpleChange(reload));
+
+        // Sửa logic THÊM SÁCH
+        add.addActionListener(e -> {
+            Book b = new Book();
+            // Cập nhật các trường để phù hợp với Book Model và DAO
+            b.setTitle("Sách mới (Cần sửa)");
+            b.setAuthor("Tác giả");
+            b.setIsbn(String.valueOf(System.currentTimeMillis()).substring(0,10));
+            b.setPublisher("NXB");
+            b.setTotal(1);
+            b.setAvailable(1);
+            b.setCategory("Khác");
+            b.setYear(java.time.Year.now().getValue()); // Thêm trường Year
+
+            // Gọi DAO để lưu vào MySQL
+            books.addBook(b);
+
+            reload.run();
+            refreshAll();
+        });
+
+        reload.run();
+        return root;
     }
+
+
     // ---------------- Readers ----------------
     private JPanel buildReaders() {
         JPanel root = new JPanel(new BorderLayout(0,12)); root.setOpaque(false);
@@ -247,7 +327,7 @@ public class LibraryFrame extends JFrame {
         actions.add(markReturned);
         root.add(actions, BorderLayout.SOUTH);
 
-
+/*
         create.addActionListener(e -> {
             if (books.isEmpty() || readers.isEmpty()) return;
             Book b = books.stream().filter(x -> x.getAvailable() > 0).findFirst().orElse(null);
@@ -262,7 +342,7 @@ public class LibraryFrame extends JFrame {
             records.add(0, rec);
             ((BorrowTableModel)borrowTable.getModel()).fireTableDataChanged();
             refreshAll();
-        });
+        });*/
 
 
         markReturned.addActionListener(e -> {
@@ -319,6 +399,51 @@ public class LibraryFrame extends JFrame {
             public void changedUpdate(javax.swing.event.DocumentEvent e){run.run();}
         };
     }
+
+    // Giả định: books được đổi tên thành bookDAO, và readers/records tạm giữ là List<T>
+
+    private void refreshAll() {
+        // 1. Tải dữ liệu Sách từ DB để tính toán (CHỈ DÙNG CHO PHẦN BOOKS)
+        List<Book> allBooks = books.getAllBooks(); // <-- GỌI DAO ĐỂ LẤY DỮ LIỆU MỚI NHẤT
+
+        // metrics
+        // SỬA: Tính Tổng số sách từ DB
+        statBooks.setText(String.valueOf(
+                allBooks.stream()
+                        .mapToInt(Book::getTotal)
+                        .sum()
+        ));
+
+        // LƯU Ý: Phần Readers và Borrowing vẫn dùng dữ liệu giả lập (records, readers List)
+        // CHỈ CẦN THAY readerDAO.getReadersCount() và recordDAO.getBorrowingCount() khi bạn có DAO
+        statReaders.setText(String.valueOf(readers.size()));
+        statBorrowing.setText(String.valueOf(records.stream().filter(r -> r.getReturnDate() == null).count()));
+
+
+        /*
+        // overdue
+        if (overdueList != null) {
+            overdueList.removeAll();
+            // Vẫn dùng List records tạm thời
+            records.stream()
+                    .filter(r -> r.getReturnDate()==null && r.getDueDate()!=null && r.getDueDate().isBefore(LocalDate.now()))
+                    .sorted(Comparator.comparing(BorrowRecord::getDueDate).reversed())
+                    .forEach(r -> overdueList.add(makeLine(r.getBook().getTitle(), r.getReader().getName(), "Quá hạn")));
+            overdueList.revalidate(); overdueList.repaint();
+        }
+
+        // recent
+        if (recentList != null) {
+            recentList.removeAll();
+            // Vẫn dùng List records tạm thời
+            records.stream().sorted(Comparator.comparing(BorrowRecord::getBorrowDate).reversed()).limit(10)
+                    .forEach(r -> recentList.add(makeLine(r.getBook().getTitle(), r.getReader().getName(), r.getStatus())));
+            recentList.revalidate(); recentList.repaint();
+        }*/
+    }
+// Phương thức makeLine KHÔNG CẦN SỬA, giữ nguyên.
+
+    /*
     private void refreshAll() {
 // metrics
         statBooks.setText(String.valueOf(books.stream().mapToInt(Book::getTotal).sum()));
@@ -355,6 +480,8 @@ public class LibraryFrame extends JFrame {
         p.add(row); p.add(s); p.setBorder(new EmptyBorder(6,0,6,0));
         return p;
     }
+
+    /*
     private void seedData() {
 // Books
         Book b1 = new Book(); b1.setTitle("Đắc Nhân Tâm"); b1.setAuthor("Dale Carnegie"); b1.setIsbn("978-604-2-14696-5"); b1.setPublisher("NXB Tổng hợp TPHCM"); b1.setTotal(10); b1.setAvailable(7); b1.setCategory("Kỹ năng sống");
@@ -375,7 +502,8 @@ public class LibraryFrame extends JFrame {
         BorrowRecord p2 = new BorrowRecord(); p2.setReader(r2); p2.setBook(b2); p2.setBorrowDate(LocalDate.of(2024,11,20)); p2.setDueDate(LocalDate.of(2024,12,4));
         BorrowRecord p3 = new BorrowRecord(); p3.setReader(r3); p3.setBook(b3); p3.setBorrowDate(LocalDate.of(2024,11,15)); p3.setDueDate(LocalDate.of(2024,11,29)); p3.setReturnDate(LocalDate.of(2024,11,28));
         records.add(p1); records.add(p2); records.add(p3);
-    }
+    }*/
+
     public static void launch() {
         SwingUtilities.invokeLater(() -> new LibraryFrame().setVisible(true));
     }
