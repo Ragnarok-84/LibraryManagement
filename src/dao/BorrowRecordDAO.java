@@ -4,24 +4,39 @@ import model.BorrowRecord;
 import util.DBConnection;
 
 import java.sql.*;
+import java.sql.Date;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-public class BorrowRecordDAO {
+public class BorrowRecordDAO extends BaseDAO<BorrowRecord> {
 
     // === Ánh xạ dòng sang đối tượng BorrowRecord ===
-    private BorrowRecord mapRowToRecord(ResultSet rs) throws SQLException {
+    protected BorrowRecord mapRowToEntity(ResultSet rs) throws SQLException {
         BorrowRecord br = new BorrowRecord();
-        br.setRecordID(rs.getInt("recordID"));
-        br.setReaderID(rs.getInt("readerID"));
-        br.setBookID(rs.getInt("bookID"));
-        br.setBorrowDate(rs.getDate("borrow_date").toLocalDate());
-        br.setDueDate(rs.getDate("due_date").toLocalDate());
-        Date ret = rs.getDate("return_date");
-        if (ret != null) br.setReturnDate(ret.toLocalDate());
+        br.setRecordID(rs.getInt("record_id"));
+        br.setReaderID(rs.getInt("reader_id"));
+        br.setBookID(rs.getInt("book_id"));
+        String borrowStr = rs.getString("borrow_date");
+        if (borrowStr != null && !borrowStr.isEmpty()) {
+            br.setBorrowDate(LocalDate.parse(borrowStr));
+        } else {
+            br.setBorrowDate(null);
+        }
+
+        String dueStr = rs.getString("due_date");
+        if (dueStr != null && !dueStr.isEmpty()) {
+            br.setDueDate(LocalDate.parse(dueStr));
+        } else {
+            br.setDueDate(null);
+        }
+
+        String returnStr = rs.getString("return_date");
+        if (returnStr != null && !returnStr.isEmpty()) {
+            br.setReturnDate(LocalDate.parse(returnStr));
+        } else {
+            br.setReturnDate(null);
+        }
+
         br.setStatus(rs.getString("status"));
         return br;
     }
@@ -30,7 +45,7 @@ public class BorrowRecordDAO {
     // 1️⃣ CREATE: Thêm bản ghi mượn sách
     // ===============================================================
     public void addBorrowRecord(BorrowRecord record) {
-        final String SQL = "INSERT INTO borrow_records (readerID, bookID, borrow_date, due_date, return_date, status) VALUES (?, ?, ?, ?, ?, ?)";
+        final String SQL = "INSERT INTO borrow_records (reader_id, book_id, borrow_date, due_date, return_date, status) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(SQL)) {
@@ -65,7 +80,7 @@ public class BorrowRecordDAO {
              ResultSet rs = stmt.executeQuery(SQL)) {
 
             while (rs.next()) {
-                list.add(mapRowToRecord(rs));
+                list.add(mapRowToEntity(rs));
             }
         } catch (SQLException e) {
             System.err.println("❌ Lỗi SQL khi đọc danh sách mượn: " + e.getMessage());
@@ -128,7 +143,7 @@ public class BorrowRecordDAO {
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    list.add(mapRowToRecord(rs));
+                    list.add(mapRowToEntity(rs));
                 }
             }
         } catch (SQLException e) {
@@ -162,7 +177,7 @@ public class BorrowRecordDAO {
         final String SQL = """
         SELECT b.title, COUNT(*) AS borrow_count
         FROM borrow_records br
-        JOIN books b ON br.bookID = b.bookID
+        JOIN books b ON br.book_id = b.book_id
         GROUP BY b.title
         ORDER BY borrow_count DESC
         LIMIT ?
@@ -188,7 +203,7 @@ public class BorrowRecordDAO {
         final String SQL = """
         SELECT r.name, COUNT(*) AS borrow_count
         FROM borrow_records br
-        JOIN readers r ON br.readerID = r.id
+        JOIN readers r ON br.reader_id = r.reader_id
         GROUP BY r.name
         ORDER BY borrow_count DESC
         LIMIT ?
@@ -233,7 +248,7 @@ public class BorrowRecordDAO {
         try (Connection conn = DBConnection.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(SQL)) {
-            while (rs.next()) list.add(mapRowToRecord(rs));
+            while (rs.next()) list.add(mapRowToEntity(rs));
         } catch (SQLException e) {
             System.err.println("❌ Lỗi SQL khi lấy danh sách quá hạn: " + e.getMessage());
         }
@@ -248,13 +263,110 @@ public class BorrowRecordDAO {
              PreparedStatement stmt = conn.prepareStatement(SQL)) {
             stmt.setInt(1, limit);
             try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) list.add(mapRowToRecord(rs));
+                while (rs.next()) list.add(mapRowToEntity(rs));
             }
         } catch (SQLException e) {
             System.err.println("❌ Lỗi SQL khi lấy bản ghi gần đây: " + e.getMessage());
         }
         return list;
     }
+
+    public List<BorrowRecord> getAllRecordsSorted() {
+        List<BorrowRecord> list = new ArrayList<>();
+        final String SQL = """
+        SELECT br.record_id, r.name AS reader_name, b.title AS book_title,
+               br.borrow_date, br.due_date, br.return_date
+        FROM borrow_records br
+        JOIN readers r ON br.reader_id = r.reader_id
+        JOIN books b ON br.book_id = b.book_id
+        ORDER BY br.record_id ASC
+    """;
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(SQL);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                BorrowRecord br = new BorrowRecord();
+                br.setRecordID(rs.getInt("record_id"));
+                br.setBorrowDate(rs.getDate("borrow_date").toLocalDate());
+                br.setDueDate(rs.getDate("due_date").toLocalDate());
+                Date ret = rs.getDate("return_date");
+                if (ret != null) br.setReturnDate(ret.toLocalDate());
+                list.add(br);
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi SQL khi lấy danh sách phiếu mượn: " + e.getMessage());
+        }
+        return list;
+    }
+
+
+    @Override
+    public List<BorrowRecord> findAll() {
+        List<BorrowRecord> list = new ArrayList<>();
+        String sql = "SELECT * FROM borrow_records ";
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                list.add(mapRowToEntity(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi khi lấy danh sách bản ghi: " + e.getMessage());
+        }
+        return list;
+    }
+
+    @Override
+    public Optional<BorrowRecord> findByID(int id) {
+        String sql = "SELECT * FROM borrow_records WHERE record_id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    BorrowRecord br = mapRowToEntity(rs);
+                    return Optional.of(br);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return Optional.empty(); // ❌ không tìm thấy
+    }
+
+    @Override
+    public void delete(int id) {
+        String sql = "DELETE FROM " + getTableName() + " WHERE " + getIdColumnName() + " = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, id);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi SQL khi xóa " + getTableName() + ": " + e.getMessage());
+        }
+    }
+
+    @Override
+    protected String getTableName() {
+        return "borrow_records";
+    }
+
+    @Override
+    protected String getIdColumnName() {
+        return "record_id";
+    }
+
+    @Override
+    public void add(BorrowRecord borrowRecord) {
+        // Logic để thêm một cuốn sách vào cơ sở dữ liệu
+    }
+
+    @Override
+    public void update(BorrowRecord borrowRecord){
+
+    }
+
 
 
 }

@@ -3,13 +3,13 @@ package model;
 import java.time.LocalDate;
 
 public class Reader {
-    private int readerID;          // Khóa chính, INT
-    private String name;       // Tên đầy đủ
+    private int readerID;
+    private String name;
     private String email;
     private String phone;
     private String address;
-    private LocalDate joinDate;    // Ngày tham gia
-    private boolean active;        // Tình trạng hoạt động (true/false)
+    private LocalDate joinDate;
+    private boolean active;
 
     public Reader() {}
 
@@ -23,7 +23,7 @@ public class Reader {
         this.active = active;
     }
 
-    // Constructor rút gọn (thêm mới)
+
     public Reader(String name, String email, String phone, String address) {
         this.name = name;
         this.email = email;
@@ -90,7 +90,7 @@ public class Reader {
         this.active = active;
     }
 
-    // ===== UI-friendly output =====
+
     @Override
     public String toString() {
         return readerID + " - " + name + (active ? " (Hoạt động)" : " (Ngưng)");

@@ -11,6 +11,7 @@ import model.BorrowRecord;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.sql.Date;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
@@ -160,41 +161,81 @@ public class LibraryFrame extends JFrame {
         JPanel root = new JPanel(new BorderLayout(0, 12));
         root.setOpaque(false);
 
+        // ======= THANH TÌM KIẾM + NÚT THÊM =======
         JTextField search = new JTextField();
         search.putClientProperty("JTextField.placeholderText", "Tìm kiếm theo tên sách, tác giả hoặc ISBN...");
+
         JButton add = new JButton("+ Thêm sách mới");
         add.setBackground(PRIMARY);
         add.setForeground(Color.WHITE);
+
         JPanel top = new JPanel(new BorderLayout(8, 0));
         top.add(search, BorderLayout.CENTER);
         top.add(add, BorderLayout.EAST);
         root.add(top, BorderLayout.NORTH);
 
-        String[] cols = {"Tên sách", "Tác giả", "ISBN", "NXB", "Tổng", "Khả dụng"};
+        // ======= CẤU HÌNH BẢNG HIỂN THỊ SÁCH =======
+        // Gợi ý: thêm cả “Mã sách” (book_id) và “Số trang” (num_pages) cho đầy đủ
+        String[] cols = {
+                "Mã sách", "Tên sách", "Tác giả", "ISBN",
+                "NXB", "Số trang", "Ngày XB", "Tổng", "Khả dụng"
+        };
+
         JTable table = new JTable(new javax.swing.table.DefaultTableModel(cols, 0));
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF); // để tự set kích thước cột
+
+        // ======= ĐIỀU CHỈNH CHIỀU RỘNG CỘT =======
+        table.getColumnModel().getColumn(0).setPreferredWidth(70);   // Mã sách
+        table.getColumnModel().getColumn(1).setPreferredWidth(280);  // Tên sách
+        table.getColumnModel().getColumn(2).setPreferredWidth(180);  // Tác giả
+        table.getColumnModel().getColumn(3).setPreferredWidth(120);  // ISBN
+        table.getColumnModel().getColumn(4).setPreferredWidth(160);  // Nhà xuất bản
+        table.getColumnModel().getColumn(5).setPreferredWidth(90);   // Số trang
+        table.getColumnModel().getColumn(6).setPreferredWidth(110);  // Ngày xuất bản
+        table.getColumnModel().getColumn(7).setPreferredWidth(70);   // Tổng
+        table.getColumnModel().getColumn(8).setPreferredWidth(80);   // Khả dụng
+
+        table.setRowHeight(26);
         table.setFillsViewportHeight(true);
         root.add(new JScrollPane(table), BorderLayout.CENTER);
 
+        // ======= NẠP DỮ LIỆU TỪ DATABASE =======
         Runnable reload = () -> {
-            javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) table.getModel();
+            javax.swing.table.DefaultTableModel model =
+                    (javax.swing.table.DefaultTableModel) table.getModel();
             model.setRowCount(0);
+
             List<Book> books = search.getText().isEmpty()
                     ? bookDAO.getAllBooks()
                     : bookDAO.searchBooks(search.getText());
-            for (Book b : books)
-                model.addRow(new Object[]{b.getTitle(), b.getAuthor(), b.getIsbn(), b.getPublisher(), b.getTotal(), b.getAvailable()});
+
+            for (Book b : books) {
+                model.addRow(new Object[]{
+                        b.getBookID(),
+                        b.getTitle(),
+                        b.getAuthor(),
+                        b.getIsbn(),
+                        b.getPublisher(),
+                        b.getNumPages(),
+                        b.getPublicationDate(),
+                        b.getTotal(),
+                        b.getAvailable()
+                });
+            }
         };
         search.getDocument().addDocumentListener(simpleChange(reload));
 
+        // ======= NÚT THÊM SÁCH =======
         add.addActionListener(e -> {
             Book b = new Book();
             b.setTitle("Sách mới");
             b.setAuthor("Tác giả");
             b.setIsbn(String.valueOf(System.currentTimeMillis()).substring(0, 10));
             b.setPublisher("NXB");
+            b.setNumPages(100);
+            b.setPublicationDate(Date.valueOf("2025-01-01").toLocalDate());
             b.setTotal(1);
             b.setAvailable(1);
-            b.setCategory("Khác");
             bookDAO.addBook(b);
             reload.run();
             refreshAll();
@@ -209,36 +250,68 @@ public class LibraryFrame extends JFrame {
         JPanel root = new JPanel(new BorderLayout(0, 12));
         root.setOpaque(false);
 
+        // ======= THANH TÌM KIẾM + NÚT THÊM =======
         JTextField search = new JTextField();
-        search.putClientProperty("JTextField.placeholderText", "Tìm kiếm tên, mã độc giả, điện thoại hoặc email...");
+        search.putClientProperty("JTextField.placeholderText",
+                "Tìm kiếm theo tên, mã độc giả, điện thoại hoặc email...");
+
         JButton add = new JButton("+ Thêm độc giả mới");
         add.setBackground(PRIMARY);
         add.setForeground(Color.WHITE);
+
         JPanel top = new JPanel(new BorderLayout(8, 0));
         top.add(search, BorderLayout.CENTER);
         top.add(add, BorderLayout.EAST);
         root.add(top, BorderLayout.NORTH);
 
-        String[] cols = {"ID", "Tên", "Điện thoại", "Email", "Địa chỉ", "Trạng thái"};
+        // ======= CẤU HÌNH CÁC CỘT =======
+        String[] cols = {"Mã độc giả", "Tên", "Email", "Điện thoại", "Địa chỉ", "Ngày tham gia", "Trạng thái"};
         JTable table = new JTable(new javax.swing.table.DefaultTableModel(cols, 0));
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        table.setAutoCreateRowSorter(true); // cho phép sắp xếp khi click tiêu đề
+
+        // ======= CẤU HÌNH ĐỘ RỘNG CỘT =======
+        table.getColumnModel().getColumn(0).setPreferredWidth(90);   // Mã độc giả
+        table.getColumnModel().getColumn(1).setPreferredWidth(180);  // Tên
+        table.getColumnModel().getColumn(2).setPreferredWidth(200);  // Email
+        table.getColumnModel().getColumn(3).setPreferredWidth(120);  // Điện thoại
+        table.getColumnModel().getColumn(4).setPreferredWidth(250);  // Địa chỉ
+        table.getColumnModel().getColumn(5).setPreferredWidth(120);  // Ngày tham gia
+        table.getColumnModel().getColumn(6).setPreferredWidth(90);   // Trạng thái (Hoạt động / Ngưng)
+
+        table.setRowHeight(26);
+        table.setFillsViewportHeight(true);
         root.add(new JScrollPane(table), BorderLayout.CENTER);
 
+        // ======= NẠP DỮ LIỆU TỪ DATABASE =======
         Runnable reload = () -> {
-            javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) table.getModel();
+            javax.swing.table.DefaultTableModel model =
+                    (javax.swing.table.DefaultTableModel) table.getModel();
             model.setRowCount(0);
+
             List<Reader> readers = readerDAO.searchReaders(search.getText());
-            for (Reader r : readers)
-                model.addRow(new Object[]{ r.getReaderID(),r.getName(), r.getPhone(), r.getEmail(), r.getAddress(), r.getJoinDate(), true});
+            for (Reader r : readers) {
+                model.addRow(new Object[]{
+                        r.getReaderID(),
+                        r.getName(),
+                        r.getEmail(),
+                        r.getPhone(),
+                        r.getAddress(),
+                        r.getJoinDate(),
+                        r.isActive() ? "Hoạt động" : "Ngưng"
+                });
+            }
         };
         search.getDocument().addDocumentListener(simpleChange(reload));
 
+        // ======= NÚT THÊM MỚI =======
         add.addActionListener(e -> {
             Reader r = new Reader();
             r.setName("Độc giả mới");
             r.setEmail("example@email.com");
             r.setPhone("0123456789");
             r.setAddress("New York");
-            r.setJoinDate(LocalDate.of(2025, 10, 10));
+            r.setJoinDate(LocalDate.now());
             r.setActive(true);
 
             readerDAO.addReader(r);
@@ -250,31 +323,42 @@ public class LibraryFrame extends JFrame {
         return root;
     }
 
+
     // ========== BORROW ==========
     private JPanel buildBorrow() {
         JPanel root = new JPanel(new BorderLayout(0, 12));
         root.setOpaque(false);
 
-        // Nút tạo phiếu mượn
+        // ======== Nút "Tạo phiếu mượn" ========
         JButton create = new JButton("+ Tạo phiếu mượn mới");
         create.setBackground(PRIMARY);
         create.setForeground(Color.WHITE);
         root.add(create, BorderLayout.NORTH);
 
-        // Bảng hiển thị danh sách phiếu mượn
+        // ======== Bảng hiển thị phiếu mượn ========
         BorrowTableModel tableModel = new BorrowTableModel();
-        tableModel.setRecords(recordDAO.getAllRecords());
+        tableModel.setRecords(recordDAO.getAllRecordsSorted()); // lấy theo ID tăng dần
         borrowTable = new JTable(tableModel);
         borrowTable.setFillsViewportHeight(true);
+        borrowTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF); // kiểm soát chiều rộng thủ công
+
+        // Đặt độ rộng cột
+        String[] cols = {"Mã phiếu", "Tên độc giả", "Tên sách", "Ngày mượn", "Hạn trả", "Ngày trả"};
+        int[] widths = {80, 200, 250, 100, 100, 100};
+        for (int i = 0; i < cols.length; i++) {
+            borrowTable.getColumnModel().getColumn(i).setHeaderValue(cols[i]);
+            borrowTable.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
+        }
+
         root.add(new JScrollPane(borrowTable), BorderLayout.CENTER);
 
-        // Nút "Trả sách"
+        // ======== Nút "Trả sách" ========
         JButton markReturned = new JButton("Trả sách");
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         actions.add(markReturned);
         root.add(actions, BorderLayout.SOUTH);
 
-        // Sự kiện khi nhấn "Trả sách"
+        // ======== Sự kiện: Trả sách ========
         markReturned.addActionListener(e -> {
             int row = borrowTable.getSelectedRow();
             if (row < 0) {
@@ -290,22 +374,30 @@ public class LibraryFrame extends JFrame {
                 return;
             }
 
-            // Cập nhật trạng thái
-            recordDAO.markReturned(br.getRecordID()); // đảm bảo BorrowRecord có getId()
-            ((BorrowTableModel) borrowTable.getModel()).setRecords(recordDAO.getAllRecords());
+            int confirm = JOptionPane.showConfirmDialog(
+                    this,
+                    "Xác nhận trả sách cho phiếu #" + br.getRecordID() + "?",
+                    "Xác nhận",
+                    JOptionPane.YES_NO_OPTION
+            );
+            if (confirm != JOptionPane.YES_OPTION) return;
+
+            // Cập nhật DB và refresh bảng
+            recordDAO.markReturned(br.getRecordID());
+            tableModel.setRecords(recordDAO.getAllRecordsSorted());
             refreshAll();
         });
 
-        // Sự kiện mở BorrowDialog
+        // ======== Sự kiện: Mở dialog tạo phiếu ========
         create.addActionListener(e -> {
             BorrowDialog dialog = new BorrowDialog(this, recordDAO, bookDAO, readerDAO);
             dialog.setVisible(true);
-            // Sau khi đóng dialog, refresh lại bảng
-            ((BorrowTableModel) borrowTable.getModel()).setRecords(recordDAO.getAllRecords());
+            tableModel.setRecords(recordDAO.getAllRecordsSorted());
         });
 
         return root;
     }
+
 
 
     // ========== REPORTS ==========

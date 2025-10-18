@@ -1,4 +1,4 @@
-reader_id,name,email,phone,address,membership_date,active
+reader_id,name,email,phone,address,join_date,active
 1,Allison Hill,redwards@gmail.com,832-067-9981x36462,"91284 David Fort Apt. 985, East Loriport, KS 51674",2024-01-25,True
 2,Noah Rhodes,fitzgeraldvictor@mcintyre-wilson.com,(517)908-6416,"41893 Ross Centers, New Thomasview, AK 04731",2025-06-16,True
 3,Angie Henderson,wendymitchell@yahoo.com,622.783.7693x89833,"50238 Glass Shore Apt. 371, West Tinachester, WA 80773",2025-05-26,False

@@ -1,35 +1,40 @@
 package dao;
 
 import model.Reader;
-import util.DBConnection;
 
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-import static util.DBConnection.getConnection;
-
-public class ReaderDAO {
+public class ReaderDAO extends BaseDAO<Reader> {
 
     // === Ánh xạ dòng từ ResultSet sang đối tượng Reader ===
-    private Reader mapRowToReader(ResultSet rs) throws SQLException {
-        Reader r = new Reader();
-        r.setReaderID(rs.getInt("readerID"));
-        r.setName(rs.getString("full_name"));
-        r.setEmail(rs.getString("email"));
-        r.setPhone(rs.getString("phone"));
-        r.setAddress(rs.getString("address"));
-        r.setJoinDate(rs.getDate("join_date").toLocalDate());
-        r.setActive(rs.getBoolean("active"));
-        return r;
+    @Override
+    protected Reader mapRowToEntity(ResultSet rs) throws SQLException {
+        Reader reader = new Reader();
+        reader.setReaderID(rs.getInt("reader_ID"));
+        reader.setName(rs.getString("name"));
+        reader.setEmail(rs.getString("email"));
+        reader.setPhone(rs.getString("phone"));
+        reader.setAddress(rs.getString("address"));
+        String dateStr = rs.getString("join_date"); // hoặc "membership_date"
+        if (dateStr != null && !dateStr.isEmpty()) {
+            reader.setJoinDate(LocalDate.parse(dateStr));
+        } else {
+            reader.setJoinDate(null); // hoặc giá trị mặc định nào đó
+        }
+
+        reader.setActive(rs.getBoolean("active"));
+    return reader;
     }
 
     // ===============================================================
     // 1️⃣ CREATE: Thêm độc giả mới
     // ===============================================================
     public void addReader(Reader reader) {
-        final String SQL = "INSERT INTO readers (full_name, email, phone, address, join_date, active) VALUES (?, ?, ?, ?, ?, ?)";
+        final String SQL = "INSERT INTO readers (name, email, phone, address, join_date, active) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(SQL)) {
@@ -55,14 +60,14 @@ public class ReaderDAO {
     // ===============================================================
     public List<Reader> getAllReaders() {
         List<Reader> readers = new ArrayList<>();
-        final String SQL = "SELECT * FROM readers ORDER BY full_name ASC";
+        final String SQL = "SELECT * FROM readers ORDER BY name ASC";
 
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(SQL)) {
 
             while (rs.next()) {
-                readers.add(mapRowToReader(rs));
+                readers.add(mapRowToEntity(rs));
             }
         } catch (SQLException e) {
             System.err.println("❌ Lỗi SQL khi lấy danh sách độc giả: " + e.getMessage());
@@ -88,7 +93,7 @@ public class ReaderDAO {
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    readers.add(mapRowToReader(rs));
+                    readers.add(mapRowToEntity(rs));
                 }
             }
         } catch (SQLException e) {
@@ -101,7 +106,7 @@ public class ReaderDAO {
     // 4️⃣ UPDATE: Cập nhật thông tin độc giả
     // ===============================================================
     public void updateReader(Reader reader) {
-        final String SQL = "UPDATE readers SET full_name=?, email=?, phone=?, address=?, active=? WHERE readerID=?";
+        final String SQL = "UPDATE readers SET name=?, email=?, phone=?, address=?, active=? WHERE readerID=?";
 
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(SQL)) {
@@ -125,7 +130,7 @@ public class ReaderDAO {
     // 5️⃣ DELETE: Xóa độc giả
     // ===============================================================
     public void deleteReader(int readerID) {
-        final String SQL = "DELETE FROM readers WHERE readerID=?";
+        final String SQL = "DELETE FROM readers WHERE reader_id=?";
 
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(SQL)) {
@@ -140,7 +145,7 @@ public class ReaderDAO {
 
 
     public String getReaderNameById(int readerID) {
-        final String SQL = "SELECT name FROM readers WHERE readerID = ?";
+        final String SQL = "SELECT name FROM readers WHERE reader_id = ?";
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(SQL)) {
 
@@ -180,5 +185,72 @@ public class ReaderDAO {
         }
         return count;
     }
+
+    @Override
+    public List<Reader> findAll() {
+        List<Reader> list = new ArrayList<>();
+        String sql = "SELECT * FROM readers ";
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                list.add(mapRowToEntity(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi khi lấy danh sách đọc giả: " + e.getMessage());
+        }
+        return list;
+    }
+
+    @Override
+    public Optional<Reader> findByID(int id) {
+        String sql = "SELECT * FROM readers WHERE reader_id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    Reader reader = mapRowToEntity(rs);
+                    return Optional.of(reader);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return Optional.empty(); // ❌ không tìm thấy
+    }
+
+    @Override
+    public void delete(int id) {
+        String sql = "DELETE FROM " + getTableName() + " WHERE " + getIdColumnName() + " = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, id);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi SQL khi xóa " + getTableName() + ": " + e.getMessage());
+        }
+    }
+
+    @Override
+    protected String getTableName() {
+        return "readers";
+    }
+
+    @Override
+    protected String getIdColumnName() {
+        return "reader_id";
+    }
+
+    @Override
+    public void add(Reader reader) {
+        // Logic để thêm một cuốn sách vào cơ sở dữ liệu
+    }
+
+    @Override
+    public void update(Reader reader){
+
+    }
+
 
 }

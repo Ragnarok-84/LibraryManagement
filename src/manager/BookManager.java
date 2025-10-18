@@ -1,57 +1,118 @@
 package manager;
 
-import java.util.*;
+import dao.BookDAO;
 import model.Book;
 
-public class BookManager {
-    private final Map<String, Book> bookMap; // Tra cứu theo ISBN (mã sách duy nhất)
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
-    public BookManager() {
-        this.bookMap = new HashMap<>();
+/**
+ * Lop quan ly logic nghiep vu cho Book.
+ * Trien khai Searchable va Reportable de cung cap cac chuc nang tim kiem va bao cao.
+ * Su dung BookDAO de thuc hien cac thao tac du lieu.
+ */
+public class BookManager implements Searchable<Book>, Reportable<Book> {
+
+    // Dependency Injection: Su dung interface BookDAO de dam bao tinh linh hoat
+    private final BookDAO bookDAO;
+
+    public BookManager(BookDAO bookDAO) {
+        this.bookDAO = bookDAO;
     }
 
-    // ✅ Thêm sách mới
-    public void addBook(Book book) {
-        if (bookMap.containsKey(book.getIsbn())) {
-            System.out.println("❌ ISBN đã tồn tại! Không thể thêm sách mới.");
-        } else {
-            bookMap.put(book.getIsbn(), book);
-            System.out.println("✅ Đã thêm sách: " + book.getTitle());
-        }
+    // --- Chuc nang quan ly co ban (CRUD duoc chuyen tu in-memory map sang DAO) ---
+
+    public void addBook(Book newBook) {
+        System.out.println("✅ Dang them sach: " + newBook.getTitle() + " qua DAO.");
+        bookDAO.add(newBook);
     }
 
-    // ✅ Xóa sách theo ISBN
     public void removeBook(String isbn) {
-        if (bookMap.remove(isbn) != null) {
-            System.out.println("✅ Đã xóa sách có ISBN " + isbn);
+        Book bookToRemove = findBookByIsbn(isbn);
+        if (bookToRemove != null) {
+            System.out.println("✅ Da xoa sach co ISBN " + isbn);
+            bookDAO.delete(bookToRemove.getBookID());
         } else {
-            System.out.println("❌ Không tìm thấy sách có ISBN này.");
+            System.out.println("❌ Khong tim thay sach co ISBN nay.");
+            return ;
         }
     }
 
-    // ✅ Tìm sách theo ISBN
     public Book findBookByIsbn(String isbn) {
-        return bookMap.get(isbn);
+        return bookDAO.findAll().stream()
+                .filter(b -> b.getIsbn() != null && b.getIsbn().equals(isbn))
+                .findFirst()
+                .orElse(null);
     }
 
-    // ✅ Hiển thị tất cả sách
-    public void displayAllBooks() {
-        if (bookMap.isEmpty()) {
-            System.out.println("📭 Chưa có sách nào trong thư viện.");
-        } else {
-            System.out.println("📚 Danh sách sách hiện có:");
-            for (Book b : bookMap.values()) {
-                System.out.println("ISBN: " + b.getIsbn() +
-                        " | Tên: " + b.getTitle() +
-                        " | Tác giả: " + b.getAuthor() +
-                        " | Năm: " + b.getYear() +
-                        " | Sẵn có: " + b.getAvailableCopies());
-            }
+    public List<Book> getAllBooks() {
+        return bookDAO.findAll();
+    }
+
+
+    // --- Implement Searchable<Book> ---
+
+    @Override
+    public List<Book> search(String query) {
+        List<Book> allBooks = bookDAO.findAll();
+        String lowerCaseQuery = query.toLowerCase();
+
+        return allBooks.stream()
+                .filter(b -> b.getTitle().toLowerCase().contains(lowerCaseQuery) ||
+                        b.getAuthor().toLowerCase().contains(lowerCaseQuery))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Optional<Book> searchById(int id) {
+        return bookDAO.findByID(id);
+    }
+
+    // --- Implement Reportable<Book> ---
+
+    @Override
+    public List<Book> generateGeneralReport() {
+
+        final double MIN_RATING = 3.5;
+
+        return bookDAO.findAll().stream()
+                .filter(b -> b.getAverageRating() >= MIN_RATING)
+                .collect(Collectors.toList());
+
+
+    }
+
+    @Override
+    public Map<String, Long> generateStatisticalReport(String criteria) {
+        List<Book> allBooks = bookDAO.findAll();
+
+        // Thong ke so luong sach theo cac tieu chi co san trong CSV
+        if ("publisher".equalsIgnoreCase(criteria)) {
+            // Thong ke theo nha xuat ban (Publisher)
+            return allBooks.stream()
+                    .collect(Collectors.groupingBy(Book::getPublisher, Collectors.counting()));
+        } else if ("authors".equalsIgnoreCase(criteria)) {
+            // Thong ke theo tac gia. Luu y: se nhom theo ca chuoi tac gia (vi du: "A/B" la mot nhom rieng).
+            return allBooks.stream()
+                    .collect(Collectors.groupingBy(Book::getAuthor, Collectors.counting()));
+        } else if ("language_code".equalsIgnoreCase(criteria)) {
+            // Thong ke theo ma ngon ngu
+            return allBooks.stream()
+                    .collect(Collectors.groupingBy(Book::getLanguageCode, Collectors.counting()));
         }
+
+        // Tra ve map bao loi neu tieu chi khong hop le
+        return Map.of("Error: Criteria not supported (Try 'publisher', 'authors', or 'language_code')", 0L);
     }
 
-    // ✅ Lấy danh sách tất cả sách (nếu cần dùng ở nơi khác)
-    public Collection<Book> getAllBooks() {
-        return bookMap.values();
-    }
+    /*
+    @Override
+    public List<Book> generateFilteredReport(Map<String, String> filters) {
+        // Day la mot phuong thuc phuc tap, chi de lai phan khung.
+        // Can trien khai logic xu ly Map<String, String> filters de loc du lieu.
+        return bookDAO.findAll();
+    }*/
 }

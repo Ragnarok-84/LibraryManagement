@@ -7,24 +7,23 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Book {
-    private String bookId; // <--- Đã thêm trường bookID
+    private int bookID;
     private String isbn;
     private String title;
     private String author;
     private String publisher;
     private int numPages;
 
-    // Các trường mặc định cho thư viện, không có trong CSV
-    private String category;
-    private int year;
+
     private int total;
     private int available;
     private int borrowedCount;
 
+
     // Các trường bổ sung từ database/CSV
     private String isbn13;
     private String languageCode;
-    private BigDecimal averageRating;
+    private double averageRating;
     private int ratingsCount;
     private int textReviewsCount;
     private LocalDate publicationDate;
@@ -35,36 +34,44 @@ public class Book {
         // Constructor mặc định
     }
 
-    // Constructor cơ bản cho thư viện (như ban đầu)
-    public Book(String isbn, String title, String author, int year, int totalCopies) {
+    public Book(String isbn, String title, String author,  int totalCopies) {
         this.isbn = isbn;
         this.title = title;
         this.author = author;
-        this.year = year;
         this.total = totalCopies;
         this.available = totalCopies;
         this.borrowedCount = 0;
+
     }
 
-    // Constructor chi tiết cho thư viện (như ban đầu)
-    public Book(String isbn, String title, String author, int year, int totalCopies, int availableCopies, int borrowedCount) {
+    public Book(int bookID, String isbn, String title, String author, String publisher,
+                int total, int available, int borrowedCount,
+                String isbn13, String languageCode, double averageRating, int ratingsCount,
+                int textReviewsCount, LocalDate publicationDate, int numPages) {
+
+        // Nhóm Thư viện (Quản lý)
+        this.bookID = bookID;
         this.isbn = isbn;
         this.title = title;
         this.author = author;
-        this.year = year;
-        this.total = totalCopies;
-        this.available = availableCopies;
+        this.publisher = publisher;
+        this.total = total;
+        this.available = available;
         this.borrowedCount = borrowedCount;
-    }
+        this.numPages = numPages;
 
-    // --- Static Factory Method để Parse CSV ---
+        // Nhóm Thông tin Chi tiết (CSV/Database Metadata)
+        this.isbn13 = isbn13;
+        this.languageCode = languageCode;
+        this.averageRating = averageRating;
+        this.ratingsCount = ratingsCount;
+        this.textReviewsCount = textReviewsCount;
+        this.publicationDate = publicationDate;
+    }
 
     private static final DateTimeFormatter CSV_DATE_FORMATTER = DateTimeFormatter.ofPattern("M/d/yyyy");
 
-    /**
-     * Tạo một đối tượng Book từ một dòng dữ liệu CSV.
-     * Thứ tự cột: bookID,title,authors,average_rating,isbn,isbn13,language_code,num_pages,ratings_count,text_reviews_count,publication_date,publisher
-     */
+
     public static Book fromCsvLine(String csvLine) {
         // Sử dụng regex để tách chuỗi, cố gắng xử lý các trường có thể chứa dấu phẩy bên trong ("...")
         List<String> fields = Arrays.asList(csvLine.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)"));
@@ -77,17 +84,18 @@ public class Book {
         Book book = new Book();
 
         // bookID (index 0) - Đã thêm
-        book.setBookId(fields.get(0).trim());
+        //book.setBookID(fields.get(0).trim());
 
         book.setTitle(fields.get(1).trim().replace("\"", "")); // title (index 1)
         book.setAuthor(fields.get(2).trim().replace("\"", "")); // authors (index 2)
 
         // average_rating (index 3)
         try {
-            book.setAverageRating(new BigDecimal(fields.get(3).trim()));
+            book.setAverageRating(Double.parseDouble(fields.get(3).trim()));
         } catch (NumberFormatException e) {
-            book.setAverageRating(BigDecimal.ZERO);
+            book.setAverageRating(0.0);
         }
+
 
         book.setIsbn(fields.get(4).trim()); // isbn (index 4)
         book.setIsbn13(fields.get(5).trim()); // isbn13 (index 5)
@@ -124,21 +132,22 @@ public class Book {
         book.setPublisher(fields.get(11).trim()); // publisher (index 11)
 
         // Thiết lập các giá trị mặc định cho thư viện
+        /*
         book.setYear(book.getPublicationDate() != null ? book.getPublicationDate().getYear() : 0);
         book.setTotal(1);
         book.setAvailable(1);
         book.setBorrowedCount(0);
 
+         */
         return book;
     }
 
     // --- Getters/Setters ---
 
-    // Getter/Setter cho bookID
-    public String getBookId() { return bookId; }
-    public void setBookId(String bookId) { this.bookId = bookId; }
 
-    // Các Getter/Setter khác (giữ nguyên)
+    public int getBookID() { return bookID; }
+    public void setBookID(int bookID) { this.bookID = bookID; }
+
     public String getIsbn() { return isbn; }
     public void setIsbn(String isbn) { this.isbn = isbn; }
 
@@ -151,11 +160,6 @@ public class Book {
     public String getPublisher() { return publisher; }
     public void setPublisher(String publisher) { this.publisher = publisher; }
 
-    public String getCategory() { return category; }
-    public void setCategory(String category) { this.category = category; }
-
-    public int getYear() { return year; }
-    public void setYear(int year) { this.year = year; }
 
     public int getTotal() { return total; }
     public void setTotal(int total) { this.total = total; }
@@ -166,6 +170,7 @@ public class Book {
     public int getBorrowedCount() { return borrowedCount; }
     public void setBorrowedCount(int borrowedCount) { this.borrowedCount = borrowedCount; }
 
+
     public String getIsbn13() { return isbn13; }
     public void setIsbn13(String isbn13) { this.isbn13 = isbn13; }
 
@@ -175,8 +180,8 @@ public class Book {
     public int getNumPages() { return numPages; }
     public void setNumPages(int numPages) { this.numPages = numPages; }
 
-    public BigDecimal getAverageRating() { return averageRating; }
-    public void setAverageRating(BigDecimal averageRating) { this.averageRating = averageRating; }
+    public double getAverageRating() { return averageRating; }
+    public void setAverageRating(double averageRating) { this.averageRating = averageRating; }
 
     public int getRatingsCount() { return ratingsCount; }
     public void setRatingsCount(int ratingsCount) { this.ratingsCount = ratingsCount; }
@@ -188,11 +193,11 @@ public class Book {
     public void setPublicationDate(LocalDate publicationDate) { this.publicationDate = publicationDate; }
 
     // --- Backward-compatible aliases for DAO ---
-    public int getTotalCopies() { return total; }
-    public int getAvailableCopies() { return available; }
+    /*public int getTotalCopies() { return total; }
+    public int getAvailableCopies() { return available; }*/
 
     // --- Business Logic ---
-
+/*
     public void borrow() {
         if (available > 0) {
             available--;
@@ -204,11 +209,6 @@ public class Book {
         if (available < total) {
             available++;
         }
-    }
+    }*/
 
-    @Override
-    public String toString() {
-        return String.format("ID %s | %s - %s (%s, %d) | Sẵn có: %d/%d | Đã mượn: %d | Rating: %.2f",
-                bookId, isbn, title, author, year, available, total, borrowedCount, averageRating != null ? averageRating.doubleValue() : 0.0);
-    }
 }
