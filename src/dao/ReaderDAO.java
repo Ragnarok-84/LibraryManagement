@@ -244,12 +244,74 @@ public class ReaderDAO extends BaseDAO<Reader> {
 
     @Override
     public void add(Reader reader) {
-        // Logic để thêm một cuốn sách vào cơ sở dữ liệu
+        // Câu lệnh SQL để chèn một bản ghi mới
+        final String SQL = "INSERT INTO readers (name, email, phone, address, join_date, is_active) " +
+                "VALUES (?, ?, ?, ?, ?, ?)";
+
+        try (Connection conn = getConnection(); // Giả sử phương thức này lấy kết nối DB
+             PreparedStatement stmt = conn.prepareStatement(SQL)) {
+
+            // Gán các giá trị từ đối tượng reader vào câu lệnh
+            stmt.setString(1, reader.getName());
+            stmt.setString(2, reader.getEmail());
+            stmt.setString(3, reader.getPhone());
+            stmt.setString(4, reader.getAddress());
+
+            // Chuyển đổi từ LocalDate sang java.sql.Date và kiểm tra null
+            if (reader.getJoinDate() != null) {
+                stmt.setDate(5, java.sql.Date.valueOf(reader.getJoinDate()));
+            } else {
+                stmt.setNull(5, java.sql.Types.DATE);
+            }
+
+            stmt.setBoolean(6, reader.isActive());
+
+            // Thực thi câu lệnh
+            stmt.executeUpdate();
+
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi SQL khi thêm độc giả: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @Override
-    public void update(Reader reader){
+    public void update(Reader reader) {
+        // Câu lệnh SQL để cập nhật bản ghi dựa trên reader_id
+        final String SQL = "UPDATE readers SET name = ?, email = ?, phone = ?, address = ?, " +
+                "join_date = ?, is_active = ? " +
+                "WHERE reader_id = ?";
 
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(SQL)) {
+
+            // Gán các giá trị mới
+            stmt.setString(1, reader.getName());
+            stmt.setString(2, reader.getEmail());
+            stmt.setString(3, reader.getPhone());
+            stmt.setString(4, reader.getAddress());
+
+            if (reader.getJoinDate() != null) {
+                stmt.setDate(5, java.sql.Date.valueOf(reader.getJoinDate()));
+            } else {
+                stmt.setNull(5, java.sql.Types.DATE);
+            }
+
+            stmt.setBoolean(6, reader.isActive());
+
+            // Gán giá trị cho điều kiện WHERE
+            stmt.setInt(7, reader.getReaderID());
+
+            // Thực thi và kiểm tra xem có dòng nào được cập nhật không
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected == 0) {
+                System.out.println("⚠️ Cảnh báo: Không tìm thấy độc giả với ID = " + reader.getReaderID() + " để cập nhật.");
+            }
+
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi SQL khi cập nhật độc giả: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
 
