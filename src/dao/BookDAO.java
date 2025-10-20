@@ -42,7 +42,7 @@ public class BookDAO extends BaseDAO<Book> {
     // === 1️⃣ CREATE: Thêm sách mới vào Database ===
     // =========================================================================
     public void addBook(Book book) {
-        final String SQL = "INSERT INTO books (isbn, title, author, publisher, category, year, total, available, isbn13, language_code, num_pages, average_rating, ratings_count, text_reviews_count, publication_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        final String SQL = "INSERT INTO books (isbn, title, authors, publisher, total, available, language_code, num_pages, average_rating, publication_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(SQL)) {
@@ -53,17 +53,10 @@ public class BookDAO extends BaseDAO<Book> {
             stmt.setString(4, book.getPublisher());
             stmt.setInt(5, book.getTotal());
             stmt.setInt(6, book.getAvailable());
-
-            // Binding các trường bổ sung
-            stmt.setString(7, book.getIsbn13());
-            stmt.setString(8, book.getLanguageCode());
-            stmt.setInt(9, book.getNumPages());
-            stmt.setDouble(10, book.getAverageRating());
-            stmt.setInt(11, book.getRatingsCount());
-            stmt.setInt(12, book.getTextReviewsCount());
-
-            // Xử lý LocalDate sang SQL DATE
-            stmt.setDate(13, book.getPublicationDate() != null ? Date.valueOf(book.getPublicationDate()) : null);
+            stmt.setString(7, book.getLanguageCode() != null ? book.getLanguageCode() : "vi");
+            stmt.setInt(8, book.getNumPages());
+            stmt.setDouble(9, book.getAverageRating());
+            stmt.setDate(10, book.getPublicationDate() != null ? Date.valueOf(book.getPublicationDate()) : null);
 
             int affectedRows = stmt.executeUpdate();
             if (affectedRows > 0) {
@@ -73,6 +66,7 @@ public class BookDAO extends BaseDAO<Book> {
             System.err.println("❌ Lỗi SQL khi thêm sách: " + e.getMessage());
         }
     }
+
 
     // =========================================================================
     // === 2️⃣ READ: Lấy toàn bộ danh sách sách từ Database ===
@@ -102,7 +96,7 @@ public class BookDAO extends BaseDAO<Book> {
     // =========================================================================
     public Book findByISBN(String isbn) {
         // Cần liệt kê tất cả các cột
-        final String SQL = "SELECT book_id, isbn, title, author, publisher, category, year, total, available, isbn13, language_code, num_pages, average_rating, ratings_count, text_reviews_count, publication_date FROM books WHERE isbn = ?";
+        final String SQL = "SELECT book_id, isbn, title, authors, publisher, total, available, language_code, num_pages, average_rating, publication_date FROM books WHERE isbn = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(SQL)) {
@@ -124,35 +118,24 @@ public class BookDAO extends BaseDAO<Book> {
     // === 4️⃣ UPDATE: Cập nhật thông tin sách ===
     // =========================================================================
     public void updateBook(Book book) {
-        final String SQL = "UPDATE books SET title=?, author=?, publisher=?, category=?, year=?, total=?, available=?, isbn13=?, language_code=?, num_pages=?, average_rating=?, ratings_count=?, text_reviews_count=?, publication_date=? WHERE isbn=?";
-
+        String sql = "UPDATE books SET title = ?, authors = ?, isbn = ?, publisher = ?, num_pages = ?, publication_date = ?, total = ?, available = ? WHERE book_id = ?";
         try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(SQL)) {
-
-            stmt.setString(1, book.getTitle());
-            stmt.setString(2, book.getAuthor());
-            stmt.setString(3, book.getPublisher());
-            stmt.setInt(4, book.getTotal());
-            stmt.setInt(5, book.getAvailable());
-
-            // Binding các trường bổ sung
-            stmt.setString(6, book.getIsbn13());
-            stmt.setString(7, book.getLanguageCode());
-            stmt.setInt(8, book.getNumPages());
-            stmt.setDouble(9, book.getAverageRating());
-            stmt.setInt(10, book.getRatingsCount());
-            stmt.setInt(11, book.getTextReviewsCount());
-            stmt.setDate(12, book.getPublicationDate() != null ? Date.valueOf(book.getPublicationDate()) : null);
-
-            // WHERE clause
-            stmt.setString(13, book.getIsbn());
-
-            stmt.executeUpdate();
-
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, book.getTitle());
+            ps.setString(2, book.getAuthor());
+            ps.setString(3, book.getIsbn());
+            ps.setString(4, book.getPublisher());
+            ps.setInt(5, book.getNumPages());
+            ps.setDate(6, Date.valueOf(book.getPublicationDate()));
+            ps.setInt(7, book.getTotal());
+            ps.setInt(8, book.getAvailable());
+            ps.setInt(9, book.getBookID());
+            ps.executeUpdate();
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi cập nhật sách: " + e.getMessage());
+            e.printStackTrace();
         }
     }
+
 
     // Trong BookDAO.java
 
@@ -168,8 +151,8 @@ public class BookDAO extends BaseDAO<Book> {
         String searchPattern = "%" + query.toLowerCase() + "%";
 
         // Câu lệnh SQL tìm kiếm trên nhiều cột, chuyển về chữ thường (LOWER) để tìm kiếm không phân biệt hoa/thường
-        final String SQL = "SELECT book_id, isbn, title, author, publisher, category, year, total, available, isbn13, language_code, num_pages, average_rating, ratings_count, text_reviews_count, publication_date FROM books " +
-                "WHERE LOWER(title) LIKE ? OR LOWER(author) LIKE ? OR LOWER(isbn) LIKE ? ORDER BY title ASC";
+        final String SQL = "SELECT book_id, isbn, title, authors, publisher, total, available, language_code, num_pages, average_rating, publication_date FROM books " +
+                "WHERE LOWER(title) LIKE ? OR LOWER(authors) LIKE ? OR LOWER(isbn) LIKE ? ORDER BY title ASC";
 
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(SQL)) {
@@ -210,6 +193,17 @@ public class BookDAO extends BaseDAO<Book> {
         }
 
         return "(Không rõ)"; // trả về mặc định nếu không tìm thấy
+    }
+
+    public void deleteBook(int bookId) {
+        String sql = "DELETE FROM books WHERE book_id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, bookId);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public int countBooks() {
@@ -292,12 +286,75 @@ public class BookDAO extends BaseDAO<Book> {
 
     @Override
     public void add(Book book) {
-        // Logic để thêm một cuốn sách vào cơ sở dữ liệu
+        // Câu lệnh SQL với các tham số '?' để chèn dữ liệu
+        final String SQL = "INSERT INTO books (isbn, title, authors, publisher, total, available, " +
+                "language_code, num_pages" +
+                "text_reviews_count, publication_date) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        try (Connection conn = getConnection(); // Lấy kết nối từ lớp BaseDAO
+             PreparedStatement stmt = conn.prepareStatement(SQL)) {
+
+            // Gán giá trị từ đối tượng book vào các tham số của câu lệnh SQL
+            stmt.setString(1, book.getIsbn());
+            stmt.setString(2, book.getTitle());
+            stmt.setString(3, book.getAuthor());
+            stmt.setString(4, book.getPublisher());
+            stmt.setInt(5, book.getTotal());
+            stmt.setInt(6, book.getAvailable());
+            stmt.setString(7, book.getLanguageCode() != null ? book.getLanguageCode() : "vi");
+            stmt.setInt(8, book.getNumPages());
+            stmt.setDouble(9, book.getAverageRating());
+            stmt.setDate(10, book.getPublicationDate() != null ? Date.valueOf(book.getPublicationDate()) : null);
+
+            // Chuyển đổi từ LocalDate (trong model) sang java.sql.Date (cho JDBC)
+            if (book.getPublicationDate() != null) {
+                stmt.setDate(15, java.sql.Date.valueOf(book.getPublicationDate()));
+            } else {
+                stmt.setNull(15, java.sql.Types.DATE);
+            }
+
+            // Thực thi câu lệnh chèn
+            stmt.executeUpdate();
+
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi SQL khi thêm sách: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @Override
-    public void update(Book book){
+    public void update(Book book) {
+        // Câu lệnh SQL để cập nhật một bản ghi dựa vào book_id
+        final String SQL = "UPDATE books SET isbn = ?, title = ?, authors = ?, publisher = ?, category = ?, total = ?, available = ?, language_code = ?, num_pages = ?, " +
+                "average_rating = ?, publication_date = ? " +
+                "WHERE book_id = ?";
 
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(SQL)) {
+
+            // Gán các giá trị cần cập nhật
+            stmt.setString(1, book.getIsbn());
+            stmt.setString(2, book.getTitle());
+            stmt.setString(3, book.getAuthor());
+            stmt.setString(4, book.getPublisher());
+            stmt.setInt(5, book.getTotal());
+            stmt.setInt(6, book.getAvailable());
+            stmt.setString(7, book.getLanguageCode() != null ? book.getLanguageCode() : "vi");
+            stmt.setInt(8, book.getNumPages());
+            stmt.setDouble(9, book.getAverageRating());
+            stmt.setDate(10, book.getPublicationDate() != null ? Date.valueOf(book.getPublicationDate()) : null);
+
+            // Thực thi câu lệnh cập nhật
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected == 0) {
+                System.out.println("⚠️ Cảnh báo: Không tìm thấy sách với ID = " + book.getBookID() + " để cập nhật.");
+            }
+
+        } catch (SQLException e) {
+            System.err.println("❌ Lỗi SQL khi cập nhật sách: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
 

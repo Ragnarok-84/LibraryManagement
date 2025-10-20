@@ -169,10 +169,25 @@ public class LibraryFrame extends JFrame {
         add.setBackground(PRIMARY);
         add.setForeground(Color.WHITE);
 
+        JButton edit = new JButton("✏️ Cập nhật sách");
+        edit.setBackground(new Color(255, 180, 0));
+        edit.setForeground(Color.WHITE);
+
+        JButton delete = new JButton("🗑 Xóa sách");
+        delete.setBackground(Color.RED);
+        delete.setForeground(Color.WHITE);
+
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        btnPanel.add(add);
+        btnPanel.add(delete);
+        btnPanel.add(edit);
+
         JPanel top = new JPanel(new BorderLayout(8, 0));
         top.add(search, BorderLayout.CENTER);
-        top.add(add, BorderLayout.EAST);
+        top.add(btnPanel, BorderLayout.EAST);
         root.add(top, BorderLayout.NORTH);
+
+
 
         // ======= CẤU HÌNH BẢNG HIỂN THỊ SÁCH =======
         // Gợi ý: thêm cả “Mã sách” (book_id) và “Số trang” (num_pages) cho đầy đủ
@@ -227,19 +242,169 @@ public class LibraryFrame extends JFrame {
 
         // ======= NÚT THÊM SÁCH =======
         add.addActionListener(e -> {
+            JTextField titleField = new JTextField();
+            JTextField authorField = new JTextField();
+            JTextField isbnField = new JTextField(String.valueOf(System.currentTimeMillis()).substring(0, 10));
+            JTextField publisherField = new JTextField();
+            JTextField pagesField = new JTextField();
+            JTextField dateField = new JTextField("2025-01-01");
+            JTextField totalField = new JTextField("1");
+
+            JPanel panel = new JPanel(new GridLayout(0, 2, 6, 6));
+            panel.add(new JLabel("Tên sách:"));
+            panel.add(titleField);
+            panel.add(new JLabel("Tác giả:"));
+            panel.add(authorField);
+            panel.add(new JLabel("ISBN:"));
+            panel.add(isbnField);
+            panel.add(new JLabel("Nhà xuất bản:"));
+            panel.add(publisherField);
+            panel.add(new JLabel("Số trang:"));
+            panel.add(pagesField);
+            panel.add(new JLabel("Ngày xuất bản (yyyy-MM-dd):"));
+            panel.add(dateField);
+            panel.add(new JLabel("Tổng số lượng:"));
+            panel.add(totalField);
+
+            int result = JOptionPane.showConfirmDialog(
+                    null,
+                    panel,
+                    "Thêm sách mới",
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE
+            );
+
+            if (result == JOptionPane.OK_OPTION) {
+                try {
+                    Book b = new Book();
+                    b.setTitle(titleField.getText());
+                    b.setAuthor(authorField.getText());
+                    b.setIsbn(isbnField.getText());
+                    b.setPublisher(publisherField.getText());
+                    b.setNumPages(Integer.parseInt(pagesField.getText()));
+                    b.setPublicationDate(LocalDate.parse(dateField.getText()));
+                    int total = Integer.parseInt(totalField.getText());
+                    b.setTotal(total);
+                    b.setAvailable(total);
+
+                    bookDAO.addBook(b);
+                    reload.run();
+                    refreshAll();
+
+                    JOptionPane.showMessageDialog(null, "✅ Thêm sách thành công!");
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(null, "❌ Lỗi khi thêm sách: " + ex.getMessage());
+                }
+            }
+        });
+        // ======= NÚT XÓA SÁCH =======
+        delete.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow(); // table là JTable hiển thị danh sách sách
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(null, "Vui lòng chọn sách cần xóa!");
+                return;
+            }
+
+            // Lấy ID sách từ cột đầu tiên (ví dụ cột 0 là book_id)
+            int bookId = Integer.parseInt(table.getValueAt(selectedRow, 0).toString());
+
+
+            int confirm = JOptionPane.showConfirmDialog(
+                    null,
+                    "Bạn có chắc muốn xóa sách này?",
+                    "Xác nhận",
+                    JOptionPane.YES_NO_OPTION
+            );
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                bookDAO.deleteBook(bookId);
+                reload.run(); // cập nhật lại danh sách
+                refreshAll();
+                JOptionPane.showMessageDialog(null, "Đã xóa sách thành công!");
+            }
+        });
+        // CẬP NHẬT SÁCH
+        edit.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(root, "Vui lòng chọn sách để cập nhật!");
+                return;
+            }
+
+            // Lấy dữ liệu hiện tại từ JTable (theo đúng thứ tự cột)
+            int id = Integer.parseInt(table.getValueAt(selectedRow, 0).toString());
+            String title = table.getValueAt(selectedRow, 1).toString();
+            String author = table.getValueAt(selectedRow, 2).toString();
+            String isbn = table.getValueAt(selectedRow, 3).toString();
+            String publisher = table.getValueAt(selectedRow, 4).toString();
+            int numPages = Integer.parseInt(table.getValueAt(selectedRow, 5).toString());
+            String pubDate = table.getValueAt(selectedRow, 6).toString();
+            int total = Integer.parseInt(table.getValueAt(selectedRow, 7).toString());
+            int available = Integer.parseInt(table.getValueAt(selectedRow, 8).toString());
+
+
+            // Hiển thị hộp thoại cho người dùng chỉnh sửa
+            String newTitle = JOptionPane.showInputDialog(root, "Tên sách:", title);
+            if (newTitle == null) return;
+
+            String newAuthor = JOptionPane.showInputDialog(root, "Tác giả:", author);
+            if (newAuthor == null) return;
+
+            String newIsbn = JOptionPane.showInputDialog(root, "ISBN:", isbn);
+            if (newIsbn == null) return;
+
+            String newPublisher = JOptionPane.showInputDialog(root, "Nhà xuất bản:", publisher);
+            if (newPublisher == null) return;
+
+            String newPubDate = JOptionPane.showInputDialog(root, "Ngày xuất bản (yyyy-mm-dd):", pubDate);
+            if (newPubDate == null) return;
+
+            int newPages;
+            try {
+                newPages = Integer.parseInt(JOptionPane.showInputDialog(root, "Số trang:", numPages));
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(root, "Số trang không hợp lệ!");
+                return;
+            }
+
+            int newTotal;
+            try {
+                newTotal = Integer.parseInt(JOptionPane.showInputDialog(root, "Tổng số lượng:", total));
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(root, "Số lượng không hợp lệ!");
+                return;
+            }
+
+            int newAvailable;
+            try {
+                newAvailable = Integer.parseInt(JOptionPane.showInputDialog(root, "Sách còn lại:", available));
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(root, "Số lượng sách còn không hợp lệ!");
+                return;
+            }
+
+            // Tạo đối tượng Book mới
             Book b = new Book();
-            b.setTitle("Sách mới");
-            b.setAuthor("Tác giả");
-            b.setIsbn(String.valueOf(System.currentTimeMillis()).substring(0, 10));
-            b.setPublisher("NXB");
-            b.setNumPages(100);
-            b.setPublicationDate(Date.valueOf("2025-01-01").toLocalDate());
-            b.setTotal(1);
-            b.setAvailable(1);
-            bookDAO.addBook(b);
+            b.setBookID(id);
+            b.setTitle(newTitle);
+            b.setAuthor(newAuthor);
+            b.setIsbn(newIsbn);
+            b.setPublisher(newPublisher);
+            b.setPublicationDate(LocalDate.parse(newPubDate));
+            b.setNumPages(newPages);
+            b.setTotal(newTotal);
+            b.setAvailable(newAvailable);
+
+            // Gọi DAO để cập nhật
+            bookDAO.updateBook(b);
+
             reload.run();
             refreshAll();
+
+            JOptionPane.showMessageDialog(root, "✅ Cập nhật sách thành công!");
         });
+
+
 
         reload.run();
         return root;
@@ -255,14 +420,28 @@ public class LibraryFrame extends JFrame {
         search.putClientProperty("JTextField.placeholderText",
                 "Tìm kiếm theo tên, mã độc giả, điện thoại hoặc email...");
 
-        JButton add = new JButton("+ Thêm độc giả mới");
+        JButton add = new JButton("+ Thêm độc giả");
         add.setBackground(PRIMARY);
         add.setForeground(Color.WHITE);
 
+        JButton edit = new JButton("✏️ Cập nhật độc giả");
+        edit.setBackground(new Color(255, 180, 0));
+        edit.setForeground(Color.WHITE);
+
+        JButton delete = new JButton("🗑 Xóa độc giả");
+        delete.setBackground(Color.RED);
+        delete.setForeground(Color.WHITE);
+
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        btnPanel.add(add);
+        btnPanel.add(delete);
+        btnPanel.add(edit);
+
         JPanel top = new JPanel(new BorderLayout(8, 0));
         top.add(search, BorderLayout.CENTER);
-        top.add(add, BorderLayout.EAST);
+        top.add(btnPanel, BorderLayout.EAST);
         root.add(top, BorderLayout.NORTH);
+
 
         // ======= CẤU HÌNH CÁC CỘT =======
         String[] cols = {"Mã độc giả", "Tên", "Email", "Điện thoại", "Địa chỉ", "Ngày tham gia", "Trạng thái"};
@@ -306,18 +485,138 @@ public class LibraryFrame extends JFrame {
 
         // ======= NÚT THÊM MỚI =======
         add.addActionListener(e -> {
-            Reader r = new Reader();
-            r.setName("Độc giả mới");
-            r.setEmail("example@email.com");
-            r.setPhone("0123456789");
-            r.setAddress("New York");
-            r.setJoinDate(LocalDate.now());
-            r.setActive(true);
+            JTextField nameField = new JTextField();
+            JTextField emailField = new JTextField();
+            JTextField phoneField = new JTextField();
+            JTextField addressField = new JTextField();
+            JCheckBox activeCheck = new JCheckBox("Hoạt động", true);
 
-            readerDAO.addReader(r);
+            JPanel panel = new JPanel(new GridLayout(0, 2, 6, 6));
+            panel.add(new JLabel("Tên độc giả:"));
+            panel.add(nameField);
+            panel.add(new JLabel("Email:"));
+            panel.add(emailField);
+            panel.add(new JLabel("Số điện thoại:"));
+            panel.add(phoneField);
+            panel.add(new JLabel("Địa chỉ:"));
+            panel.add(addressField);
+            panel.add(new JLabel("Trạng thái:"));
+            panel.add(activeCheck);
+
+            int result = JOptionPane.showConfirmDialog(
+                    null,
+                    panel,
+                    "Thêm độc giả mới",
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE
+            );
+
+            if (result == JOptionPane.OK_OPTION) {
+                try {
+                    Reader r = new Reader();
+                    r.setName(nameField.getText().trim());
+                    r.setEmail(emailField.getText().trim());
+                    r.setPhone(phoneField.getText().trim());
+                    r.setAddress(addressField.getText().trim());
+                    r.setJoinDate(LocalDate.now());
+                    r.setActive(activeCheck.isSelected());
+
+                    if (r.getName().isEmpty()) {
+                        throw new Exception("Tên độc giả không được để trống!");
+                    }
+
+                    readerDAO.addReader(r);
+                    reload.run();
+                    refreshAll();
+                    JOptionPane.showMessageDialog(null, "✅ Thêm độc giả thành công!");
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(null, "❌ Lỗi khi thêm độc giả: " + ex.getMessage());
+                }
+            }
+        });
+        // ========== XÓA ĐỘC GIẢ ==========
+        delete.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(root, "Vui lòng chọn độc giả để xóa!");
+                return;
+            }
+
+            int confirm = JOptionPane.showConfirmDialog(
+                    root,
+                    "Bạn có chắc muốn xóa độc giả này?",
+                    "Xác nhận xóa",
+                    JOptionPane.YES_NO_OPTION
+            );
+            if (confirm != JOptionPane.YES_OPTION) return;
+
+            // Lấy ID độc giả
+            int readerId = Integer.parseInt(table.getValueAt(selectedRow, 0).toString());
+
+            // Xóa trong database
+            readerDAO.deleteReader(readerId);
+
+            // Làm mới giao diện
             reload.run();
             refreshAll();
+
+            JOptionPane.showMessageDialog(root, "Đã xóa độc giả thành công!");
         });
+        // CẬP NHẬT ĐỘC GIẢ
+        edit.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(root, "Vui lòng chọn độc giả để cập nhật!");
+                return;
+            }
+
+            // Lấy dữ liệu hiện tại từ JTable
+            int id = Integer.parseInt(table.getValueAt(selectedRow, 0).toString());
+            String name = table.getValueAt(selectedRow, 1).toString();
+            String email = table.getValueAt(selectedRow, 2).toString();
+            String phone = table.getValueAt(selectedRow, 3).toString();
+            String address = table.getValueAt(selectedRow, 4).toString();
+            boolean active = Boolean.parseBoolean(table.getValueAt(selectedRow, 5).toString());
+
+            // Hiển thị hộp thoại cho người dùng chỉnh sửa
+            String newName = JOptionPane.showInputDialog(root, "Họ tên:", name);
+            if (newName == null) return;
+
+            String newEmail = JOptionPane.showInputDialog(root, "Email:", email);
+            if (newEmail == null) return;
+
+            String newPhone = JOptionPane.showInputDialog(root, "Số điện thoại:", phone);
+            if (newPhone == null) return;
+
+            String newAddress = JOptionPane.showInputDialog(root, "Địa chỉ:", address);
+            if (newAddress == null) return;
+
+            int confirm = JOptionPane.showConfirmDialog(root,
+                    "Độc giả đang hoạt động?",
+                    "Trạng thái hoạt động",
+                    JOptionPane.YES_NO_OPTION);
+            boolean newActive = (confirm == JOptionPane.YES_OPTION);
+
+            // Tạo đối tượng Reader mới
+            Reader r = new Reader();
+            r.setReaderID(id);
+            r.setName(newName);
+            r.setEmail(newEmail);
+            r.setPhone(newPhone);
+            r.setAddress(newAddress);
+            r.setActive(newActive);
+
+            // Gọi DAO để cập nhật
+            readerDAO.updateReader(r);
+
+            reload.run();
+            refreshAll();
+
+            JOptionPane.showMessageDialog(root, "✅ Cập nhật độc giả thành công!");
+        });
+
+
+
 
         reload.run();
         return root;

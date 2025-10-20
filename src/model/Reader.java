@@ -1,6 +1,11 @@
 package model;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.time.LocalDate;
+
+import static util.DBConnection.getConnection;
 
 public class Reader {
     private int readerID;
@@ -89,6 +94,23 @@ public class Reader {
     public void setActive(boolean active) {
         this.active = active;
     }
+
+    public void updateReader(Reader r) {
+        String sql = "UPDATE readers SET name=?, email=?, phone=?, address=?, is_active=? WHERE reader_id=?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, r.getName());
+            ps.setString(2, r.getEmail());
+            ps.setString(3, r.getPhone());
+            ps.setString(4, r.getAddress());
+            ps.setBoolean(5, r.isActive());
+            ps.setInt(6, r.getReaderID());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
 
 
     @Override
