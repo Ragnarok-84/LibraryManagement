@@ -29,6 +29,27 @@ public class ReaderDAO extends BaseDAO<Reader> {
         reader.setActive(rs.getBoolean("active"));
     return reader;
     }
+    public Reader getReaderById(int id) {
+        String sql = "SELECT * FROM readers WHERE reader_id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                Reader r = new Reader();
+                r.setReaderID(rs.getInt("reader_id"));
+                r.setName(rs.getString("name"));
+                r.setEmail(rs.getString("email"));
+                r.setPhone(rs.getString("phone"));
+                r.setAddress(rs.getString("address"));
+                r.setActive(rs.getBoolean("active"));
+                return r;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
     // ===============================================================
     // 1️⃣ CREATE: Thêm độc giả mới
@@ -105,26 +126,22 @@ public class ReaderDAO extends BaseDAO<Reader> {
     // ===============================================================
     // 4️⃣ UPDATE: Cập nhật thông tin độc giả
     // ===============================================================
-    public void updateReader(Reader reader) {
-        final String SQL = "UPDATE readers SET name=?, email=?, phone=?, address=?, active=? WHERE readerID=?";
-
+    public void updateReader(Reader r) {
+        String sql = "UPDATE readers SET name=?, email=?, phone=?, address=?, active=? WHERE reader_id=?";
         try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(SQL)) {
-
-            stmt.setString(1, reader.getName());
-            stmt.setString(2, reader.getEmail());
-            stmt.setString(3, reader.getPhone());
-            stmt.setString(4, reader.getAddress());
-            stmt.setBoolean(5, reader.isActive());
-            stmt.setInt(6, reader.getReaderID());
-
-            stmt.executeUpdate();
-            System.out.println("✅ Cập nhật độc giả thành công!");
-
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, r.getName());
+            ps.setString(2, r.getEmail());
+            ps.setString(3, r.getPhone());
+            ps.setString(4, r.getAddress());
+            ps.setBoolean(5, r.isActive());
+            ps.setInt(6, r.getReaderID());
+            ps.executeUpdate();
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi cập nhật độc giả: " + e.getMessage());
+            e.printStackTrace();
         }
     }
+
 
     // ===============================================================
     // 5️⃣ DELETE: Xóa độc giả
@@ -274,6 +291,7 @@ public class ReaderDAO extends BaseDAO<Reader> {
             e.printStackTrace();
         }
     }
+
 
     @Override
     public void update(Reader reader) {

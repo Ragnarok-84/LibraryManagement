@@ -53,17 +53,10 @@ public class BookDAO extends BaseDAO<Book> {
             stmt.setString(4, book.getPublisher());
             stmt.setInt(5, book.getTotal());
             stmt.setInt(6, book.getAvailable());
-
-            // Binding các trường bổ sung
-            stmt.setString(7, book.getIsbn13());
-            stmt.setString(8, book.getLanguageCode());
-            stmt.setInt(9, book.getNumPages());
-            stmt.setDouble(10, book.getAverageRating());
-            stmt.setInt(11, book.getRatingsCount());
-            stmt.setInt(12, book.getTextReviewsCount());
-
-            // Xử lý LocalDate sang SQL DATE
-            stmt.setDate(13, book.getPublicationDate() != null ? Date.valueOf(book.getPublicationDate()) : null);
+            stmt.setString(7, book.getLanguageCode() != null ? book.getLanguageCode() : "vi");
+            stmt.setInt(8, book.getNumPages());
+            stmt.setDouble(9, book.getAverageRating());
+            stmt.setDate(10, book.getPublicationDate() != null ? Date.valueOf(book.getPublicationDate()) : null);
 
             int affectedRows = stmt.executeUpdate();
             if (affectedRows > 0) {
@@ -73,6 +66,7 @@ public class BookDAO extends BaseDAO<Book> {
             System.err.println("❌ Lỗi SQL khi thêm sách: " + e.getMessage());
         }
     }
+
 
     // =========================================================================
     // === 2️⃣ READ: Lấy toàn bộ danh sách sách từ Database ===
@@ -124,35 +118,24 @@ public class BookDAO extends BaseDAO<Book> {
     // === 4️⃣ UPDATE: Cập nhật thông tin sách ===
     // =========================================================================
     public void updateBook(Book book) {
-        final String SQL = "UPDATE books SET title=?, authors=?, publisher=?, total=?, available=?, language_code=?, num_pages=?, average_rating=?, publication_date=? WHERE isbn=?";
-
+        String sql = "UPDATE books SET title = ?, authors = ?, isbn = ?, publisher = ?, num_pages = ?, publication_date = ?, total = ?, available = ? WHERE book_id = ?";
         try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(SQL)) {
-
-            stmt.setString(1, book.getTitle());
-            stmt.setString(2, book.getAuthor());
-            stmt.setString(3, book.getPublisher());
-            stmt.setInt(4, book.getTotal());
-            stmt.setInt(5, book.getAvailable());
-
-            // Binding các trường bổ sung
-            stmt.setString(6, book.getIsbn13());
-            stmt.setString(7, book.getLanguageCode());
-            stmt.setInt(8, book.getNumPages());
-            stmt.setDouble(9, book.getAverageRating());
-            stmt.setInt(10, book.getRatingsCount());
-            stmt.setInt(11, book.getTextReviewsCount());
-            stmt.setDate(12, book.getPublicationDate() != null ? Date.valueOf(book.getPublicationDate()) : null);
-
-            // WHERE clause
-            stmt.setString(13, book.getIsbn());
-
-            stmt.executeUpdate();
-
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, book.getTitle());
+            ps.setString(2, book.getAuthor());
+            ps.setString(3, book.getIsbn());
+            ps.setString(4, book.getPublisher());
+            ps.setInt(5, book.getNumPages());
+            ps.setDate(6, Date.valueOf(book.getPublicationDate()));
+            ps.setInt(7, book.getTotal());
+            ps.setInt(8, book.getAvailable());
+            ps.setInt(9, book.getBookID());
+            ps.executeUpdate();
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi cập nhật sách: " + e.getMessage());
+            e.printStackTrace();
         }
     }
+
 
     // Trong BookDAO.java
 
@@ -210,6 +193,17 @@ public class BookDAO extends BaseDAO<Book> {
         }
 
         return "(Không rõ)"; // trả về mặc định nếu không tìm thấy
+    }
+
+    public void deleteBook(int bookId) {
+        String sql = "DELETE FROM books WHERE book_id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, bookId);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public int countBooks() {
@@ -306,14 +300,12 @@ public class BookDAO extends BaseDAO<Book> {
             stmt.setString(2, book.getTitle());
             stmt.setString(3, book.getAuthor());
             stmt.setString(4, book.getPublisher());
-            stmt.setInt(7, book.getTotal());
-            stmt.setInt(8, book.getAvailable());
-            stmt.setString(9, book.getIsbn13());
-            stmt.setString(10, book.getLanguageCode());
-            stmt.setInt(11, book.getNumPages());
-            stmt.setDouble(12, book.getAverageRating());
-            stmt.setInt(13, book.getRatingsCount());
-            stmt.setInt(14, book.getTextReviewsCount());
+            stmt.setInt(5, book.getTotal());
+            stmt.setInt(6, book.getAvailable());
+            stmt.setString(7, book.getLanguageCode() != null ? book.getLanguageCode() : "vi");
+            stmt.setInt(8, book.getNumPages());
+            stmt.setDouble(9, book.getAverageRating());
+            stmt.setDate(10, book.getPublicationDate() != null ? Date.valueOf(book.getPublicationDate()) : null);
 
             // Chuyển đổi từ LocalDate (trong model) sang java.sql.Date (cho JDBC)
             if (book.getPublicationDate() != null) {
@@ -346,23 +338,12 @@ public class BookDAO extends BaseDAO<Book> {
             stmt.setString(2, book.getTitle());
             stmt.setString(3, book.getAuthor());
             stmt.setString(4, book.getPublisher());
-            stmt.setInt(7, book.getTotal());
-            stmt.setInt(8, book.getAvailable());
-            stmt.setString(9, book.getIsbn13());
-            stmt.setString(10, book.getLanguageCode());
-            stmt.setInt(11, book.getNumPages());
-            stmt.setDouble(12, book.getAverageRating());
-            stmt.setInt(13, book.getRatingsCount());
-            stmt.setInt(14, book.getTextReviewsCount());
-
-            if (book.getPublicationDate() != null) {
-                stmt.setDate(15, java.sql.Date.valueOf(book.getPublicationDate()));
-            } else {
-                stmt.setNull(15, java.sql.Types.DATE);
-            }
-
-            // Gán giá trị cho điều kiện WHERE
-            stmt.setInt(16, book.getBookID());
+            stmt.setInt(5, book.getTotal());
+            stmt.setInt(6, book.getAvailable());
+            stmt.setString(7, book.getLanguageCode() != null ? book.getLanguageCode() : "vi");
+            stmt.setInt(8, book.getNumPages());
+            stmt.setDouble(9, book.getAverageRating());
+            stmt.setDate(10, book.getPublicationDate() != null ? Date.valueOf(book.getPublicationDate()) : null);
 
             // Thực thi câu lệnh cập nhật
             int rowsAffected = stmt.executeUpdate();
