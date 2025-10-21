@@ -111,6 +111,7 @@ public class LibraryFrame extends JFrame {
         metrics.add(metric("Đang mượn", statBorrowing = new JLabel("0"), INFO));
         root.add(metrics, BorderLayout.NORTH);
 
+        /*
         JPanel alert = new JPanel(new BorderLayout());
         alert.setBackground(new Color(255, 243, 244));
         alert.setBorder(new EmptyBorder(12, 12, 12, 12));
@@ -137,6 +138,17 @@ public class LibraryFrame extends JFrame {
         split.add(recentBox);
 
         root.add(split, BorderLayout.SOUTH);
+        return root;*/
+
+
+        JPanel empty = new JPanel();
+        empty.setOpaque(false);
+        root.add(empty, BorderLayout.CENTER);
+
+        // Gán lại overdueList và recentList thành null để refreshAll() không bị lỗi khi cố gắng cập nhật chúng
+        overdueList = null;
+        recentList = null;
+
         return root;
     }
 
@@ -210,6 +222,7 @@ public class LibraryFrame extends JFrame {
         statReaders.setText(String.valueOf(readerDAO.countReaders()));
         statBorrowing.setText(String.valueOf(recordDAO.countBorrowing()));
 
+        /*
         // Làm mới danh sách quá hạn
         if (overdueList != null) {
             overdueList.removeAll();
@@ -232,7 +245,7 @@ public class LibraryFrame extends JFrame {
             });
             recentList.revalidate();
             recentList.repaint();
-        }
+        }*/
     }
 
 

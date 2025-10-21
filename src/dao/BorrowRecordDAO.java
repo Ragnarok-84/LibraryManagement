@@ -228,7 +228,6 @@ public class BorrowRecordDAO extends BaseDAO<BorrowRecord> {
 // 7️⃣ COUNT & REPORT HELPERS
 // ===============================================================
 
-    // Đếm số lượt mượn đang hoạt động (chưa trả)
     public int countBorrowing() {
         final String SQL = "SELECT COUNT(*) FROM borrow_records WHERE return_date IS NULL";
         try (Connection conn = DBConnection.getConnection();
@@ -240,6 +239,8 @@ public class BorrowRecordDAO extends BaseDAO<BorrowRecord> {
         }
         return 0;
     }
+
+
 
     // Lấy danh sách bản ghi quá hạn (chưa trả và quá due_date)
     public List<BorrowRecord> getOverdueRecords() {
@@ -274,7 +275,8 @@ public class BorrowRecordDAO extends BaseDAO<BorrowRecord> {
     public List<BorrowRecord> getAllRecordsSorted() {
         List<BorrowRecord> list = new ArrayList<>();
         final String SQL = """
-        SELECT br.record_id, r.name AS reader_name, b.title AS book_title,
+        SELECT br.record_id, br.reader_id, br.book_id,
+               r.name AS reader_name, b.title AS book_title,
                br.borrow_date, br.due_date, br.return_date
         FROM borrow_records br
         JOIN readers r ON br.reader_id = r.reader_id
@@ -288,10 +290,14 @@ public class BorrowRecordDAO extends BaseDAO<BorrowRecord> {
             while (rs.next()) {
                 BorrowRecord br = new BorrowRecord();
                 br.setRecordID(rs.getInt("record_id"));
+                br.setReaderID(rs.getInt("reader_id"));
+                br.setBookID(rs.getInt("book_id"));
                 br.setBorrowDate(rs.getDate("borrow_date").toLocalDate());
                 br.setDueDate(rs.getDate("due_date").toLocalDate());
+
                 Date ret = rs.getDate("return_date");
                 if (ret != null) br.setReturnDate(ret.toLocalDate());
+
                 list.add(br);
             }
         } catch (SQLException e) {
@@ -299,6 +305,7 @@ public class BorrowRecordDAO extends BaseDAO<BorrowRecord> {
         }
         return list;
     }
+
 
 
     @Override

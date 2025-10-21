@@ -48,8 +48,8 @@ public class BorrowTableModel extends AbstractTableModel {
 
         return switch (columnIndex) {
             case 0 -> r.getRecordID(); // Mã phiếu (bổ sung trong model BorrowRecord)
-            case 1 -> r.getReader() != null ? r.getReader().getName() : "";
-            case 2 -> r.getBook() != null ? r.getBook().getTitle() : "";
+            case 1 -> r.getReaderID() ;
+            case 2 -> r.getBookID();
             case 3 -> r.getBorrowDate() != null ? fmt.format(r.getBorrowDate()) : "";
             case 4 -> r.getDueDate() != null ? fmt.format(r.getDueDate()) : "";
             case 5 -> r.getReturnDate() != null ? fmt.format(r.getReturnDate()) : "";

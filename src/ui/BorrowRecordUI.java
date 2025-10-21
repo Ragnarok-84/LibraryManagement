@@ -48,8 +48,8 @@ public class BorrowRecordUI extends JPanel {
         borrowTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
         // Đặt độ rộng cột
-        String[] cols = {"Mã phiếu", "Tên độc giả", "Tên sách", "Ngày mượn", "Hạn trả", "Ngày trả"};
-        int[] widths = {80, 200, 250, 100, 100, 100};
+        String[] cols = {"Mã phiếu", "Mã độc giả", "Mã sách", "Ngày mượn", "Hạn trả", "Ngày trả"};
+        int[] widths = {80, 80, 80, 100, 100, 100};
         for (int i = 0; i < cols.length; i++) {
             borrowTable.getColumnModel().getColumn(i).setHeaderValue(cols[i]);
             borrowTable.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
