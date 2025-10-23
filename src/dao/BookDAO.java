@@ -21,11 +21,11 @@ public class BookDAO extends BaseDAO<Book> {
         book.setIsbn(rs.getString("isbn"));
         book.setLanguageCode(rs.getString("language_code"));
         book.setNumPages(rs.getInt("num_pages"));
+        String dateStr = rs.getString("publication_date");
         book.setPublisher(rs.getString("publisher"));
         //book.setTotal(rs.getInt("total"));
         //book.setAvailable(rs.getInt("available"));
         //book.setBorrowedCount(book.getTotal() - book.getAvailable());
-        String dateStr = rs.getString("publication_date");
         if (dateStr != null && !dateStr.trim().isEmpty()) {
             book.setPublicationDate(LocalDate.parse(dateStr));
         } else {
@@ -41,30 +41,31 @@ public class BookDAO extends BaseDAO<Book> {
     // =========================================================================
     // === 1️⃣ CREATE: Thêm sách mới vào Database ===
     // =========================================================================
-    public void addBook(Book book) {
-        final String SQL = "INSERT INTO books (isbn, title, authors, publisher, total, available, language_code, num_pages, average_rating, publication_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    public void addBook(Book book) throws SQLException {
+        // CÁC CỘT:    (1-title, 2-authors, 3-average_rating, 4-isbn, 5-language_code, 6-num_pages, 7-publication_date, 8-publisher, 9-total, 10-available)
+        final String SQL = "INSERT INTO books (title, authors, average_rating, isbn, language_code, num_pages, publication_date, publisher, total, available) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(SQL)) {
 
-            stmt.setString(1, book.getIsbn());
-            stmt.setString(2, book.getTitle());
-            stmt.setString(3, book.getAuthor());
-            stmt.setString(4, book.getPublisher());
-            stmt.setInt(5, book.getTotal());
-            stmt.setInt(6, book.getAvailable());
-            stmt.setString(7, book.getLanguageCode() != null ? book.getLanguageCode() : "vi");
-            stmt.setInt(8, book.getNumPages());
-            stmt.setDouble(9, book.getAverageRating());
-            stmt.setDate(10, book.getPublicationDate() != null ? Date.valueOf(book.getPublicationDate()) : null);
+            // GÁN GIÁ TRỊ THEO ĐÚNG THỨ TỰ TRÊN
+            stmt.setString(1, book.getTitle());
+            stmt.setString(2, book.getAuthor());
+            stmt.setDouble(3, book.getAverageRating()); // Giao diện chưa có, sẽ mặc định là 0.0
+            stmt.setString(4, book.getIsbn());
+            stmt.setString(5, book.getLanguageCode() != null ? book.getLanguageCode() : "vi"); // Giao diện chưa có, mặc định 'vi'
+            stmt.setInt(6, book.getNumPages());
+            stmt.setDate(7, book.getPublicationDate() != null ? Date.valueOf(book.getPublicationDate()) : null);
+            stmt.setString(8, book.getPublisher());
+            stmt.setInt(9, book.getTotal());
+            stmt.setInt(10, book.getAvailable());
 
             int affectedRows = stmt.executeUpdate();
             if (affectedRows > 0) {
                 System.out.println("✅ Thêm sách thành công (ghi vào MySQL).");
             }
-        } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi thêm sách: " + e.getMessage());
         }
+        // Khi có lỗi SQLException, nó sẽ tự động được ném ra cho BookUI bắt
     }
 
 
@@ -74,7 +75,7 @@ public class BookDAO extends BaseDAO<Book> {
     // Trong BookDAO.java
 
     public List<Book> getAllBooks() {
-        final String SQL = "SELECT book_id,  title, authors, average_rating,isbn, language_code, num_pages,  publication_date, publisher FROM books ORDER BY title ASC";
+        final String SQL = "SELECT book_id, title, authors, average_rating,isbn, language_code, num_pages,  publication_date, publisher FROM books ORDER BY title ASC";
 
         List<Book> books = new ArrayList<>();
 
@@ -96,7 +97,7 @@ public class BookDAO extends BaseDAO<Book> {
     // =========================================================================
     public Book findByISBN(String isbn) {
         // Cần liệt kê tất cả các cột
-        final String SQL = "SELECT book_id, isbn, title, authors, publisher, total, available, language_code, num_pages, average_rating, publication_date FROM books WHERE isbn = ?";
+        final String SQL = "SELECT book_id, title, authors, average_rating,isbn, language_code, num_pages,  publication_date, publisher, total, available FROM books WHERE isbn = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(SQL)) {
@@ -195,14 +196,67 @@ public class BookDAO extends BaseDAO<Book> {
         return "(Không rõ)"; // trả về mặc định nếu không tìm thấy
     }
 
-    public void deleteBook(int bookId) {
-        String sql = "DELETE FROM books WHERE book_id = ?";
-        try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, bookId);
-            stmt.executeUpdate();
+    public void deleteBook(int bookId) throws SQLException {
+        // 1. Khai báo các câu lệnh SQL
+        String deleteBorrowSql = "DELETE FROM borrow_records WHERE book_id = ?";
+        String deleteBookSql = "DELETE FROM books WHERE book_id = ?";
+
+        Connection conn = null; // Khai báo kết nối ở ngoài để quản lý transaction
+
+        try {
+            // 2. Lấy kết nối và TẮT chế độ auto-commit
+            conn = getConnection();
+            if (conn == null) {
+                throw new SQLException("Không thể kết nối đến database.");
+            }
+            conn.setAutoCommit(false); // <-- BẮT ĐẦU TRANSACTION
+
+            // 3. Xóa các bản ghi mượn sách liên quan TRƯỚC
+            try (PreparedStatement stmtBorrow = conn.prepareStatement(deleteBorrowSql)) {
+                stmtBorrow.setInt(1, bookId);
+                stmtBorrow.executeUpdate();
+                // Bạn có thể in ra console để theo dõi (không bắt buộc)
+                // System.out.println("Đã xóa các bản ghi mượn sách của book_id: " + bookId);
+            }
+
+            // 4. Xóa sách
+            try (PreparedStatement stmtBook = conn.prepareStatement(deleteBookSql)) {
+                stmtBook.setInt(1, bookId);
+                int affectedRows = stmtBook.executeUpdate();
+                if (affectedRows == 0) {
+                    // Nếu không xóa được sách nào (ví dụ: book_id không tồn tại)
+                    // ta cũng nên rollback
+                    throw new SQLException("Xóa sách thất bại, không tìm thấy book_id = " + bookId);
+                }
+            }
+
+            // 5. Nếu cả hai lệnh trên thành công, LƯU (commit) transaction
+            conn.commit();
+            // System.out.println("Đã xóa sách và các bản ghi mượn liên quan thành công.");
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            // 6. Nếu có BẤT KỲ lỗi nào xảy ra, HỦY BỎ (rollback) toàn bộ thay đổi
+            System.err.println("Lỗi SQL, đang rollback... " + e.getMessage());
+            if (conn != null) {
+                try {
+                    conn.rollback(); // <-- HỦY BỎ TRANSACTION
+                } catch (SQLException ex) {
+                    System.err.println("Lỗi khi rollback: " + ex.getMessage());
+                }
+            }
+            // Ném lại lỗi để BookUI có thể bắt và hiển thị cho người dùng
+            throw e;
+
+        } finally {
+            // 7. Luôn dọn dẹp kết nối và bật lại auto-commit
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true); // Trả lại trạng thái auto-commit mặc định
+                    conn.close(); // Đóng kết nối
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -287,11 +341,7 @@ public class BookDAO extends BaseDAO<Book> {
     @Override
     public void add(Book book) {
         // Câu lệnh SQL với các tham số '?' để chèn dữ liệu
-        final String SQL = "INSERT INTO books (isbn, title, authors, publisher, total, available, " +
-                "language_code, num_pages" +
-                "text_reviews_count, publication_date) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
+        final String SQL = "INSERT INTO books (title, authors, average_rating, isbn, language_code, num_pages, publication_date, publisher, total, available) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = getConnection(); // Lấy kết nối từ lớp BaseDAO
              PreparedStatement stmt = conn.prepareStatement(SQL)) {
 
