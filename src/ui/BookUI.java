@@ -6,6 +6,7 @@ import model.Book;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -106,6 +107,7 @@ public class BookUI extends JPanel { // Thay đổi từ JFrame sang JPanel
 
         // ======= NÚT THÊM SÁCH (Giữ nguyên logic) =======
         add.addActionListener(e -> {
+            // --- Giao diện dialog (giữ nguyên) ---
             JTextField titleField = new JTextField();
             JTextField authorField = new JTextField();
             JTextField isbnField = new JTextField(String.valueOf(System.currentTimeMillis()).substring(0, 10));
@@ -138,25 +140,70 @@ public class BookUI extends JPanel { // Thay đổi từ JFrame sang JPanel
                     JOptionPane.PLAIN_MESSAGE
             );
 
+            // --- Bắt đầu xử lý logic SAU KHI nhấn OK ---
             if (result == JOptionPane.OK_OPTION) {
                 try {
+                    // --- 1. VALIDATION (Xác thực dữ liệu) ---
+                    String title = titleField.getText();
+                    String author = authorField.getText();
+                    String pagesStr = pagesField.getText();
+                    String totalStr = totalField.getText();
+                    String dateStr = dateField.getText();
+
+                    if (title.isBlank() || author.isBlank() || pagesStr.isBlank() || totalStr.isBlank() || dateStr.isBlank()) {
+                        JOptionPane.showMessageDialog(null, "❌ Vui lòng nhập đầy đủ tất cả các trường.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        return; // Dừng lại
+                    }
+
+                    int numPages;
+                    try {
+                        numPages = Integer.parseInt(pagesStr);
+                    } catch (NumberFormatException nfe) {
+                        JOptionPane.showMessageDialog(null, "❌ 'Số trang' phải là một con số.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        return; // Dừng lại
+                    }
+
+                    int total;
+                    try {
+                        total = Integer.parseInt(totalStr);
+                    } catch (NumberFormatException nfe) {
+                        JOptionPane.showMessageDialog(null, "❌ 'Tổng số lượng' phải là một con số.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        return; // Dừng lại
+                    }
+
+                    LocalDate pubDate;
+                    try {
+                        pubDate = LocalDate.parse(dateStr);
+                    } catch (java.time.format.DateTimeParseException dte) {
+                        JOptionPane.showMessageDialog(null, "❌ 'Ngày xuất bản' phải đúng định dạng yyyy-MM-dd.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        return; // Dừng lại
+                    }
+
+                    // --- 2. TẠO OBJECT (Nếu validation thành công) ---
                     Book b = new Book();
-                    b.setTitle(titleField.getText());
-                    b.setAuthor(authorField.getText());
+                    b.setTitle(title);
+                    b.setAuthor(author);
                     b.setIsbn(isbnField.getText());
                     b.setPublisher(publisherField.getText());
-                    b.setNumPages(Integer.parseInt(pagesField.getText()));
-                    b.setPublicationDate(LocalDate.parse(dateField.getText()));
-                    int total = Integer.parseInt(totalField.getText());
+                    b.setNumPages(numPages);
+                    b.setPublicationDate(pubDate);
                     b.setTotal(total);
-                    b.setAvailable(total);
+                    b.setAvailable(total); // Mặc định sách mới thì số lượng còn = tổng
 
+                    // --- 3. GỌI DAO (đã sửa để ném SQLException) ---
                     bookDAO.addBook(b);
+
+                    // --- 4. THÀNH CÔNG ---
                     reload.run();
-                    parentFrame.refreshAll(); // Gọi refreshAll()
+                    parentFrame.refreshAll();
                     JOptionPane.showMessageDialog(null, "✅ Thêm sách thành công!");
+
+                } catch (SQLException sqlEx) {
+                    // Lỗi từ Database (ví dụ: Trùng ISBN)
+                    JOptionPane.showMessageDialog(null, "❌ Lỗi CSDL khi thêm sách: " + sqlEx.getMessage(), "Lỗi SQL", JOptionPane.ERROR_MESSAGE);
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(null, "❌ Lỗi khi thêm sách: " + ex.getMessage());
+                    // Lỗi chung khác (bao gồm lỗi validation ở trên nếu bạn không 'return')
+                    JOptionPane.showMessageDialog(null, "❌ Đã xảy ra lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
@@ -173,16 +220,29 @@ public class BookUI extends JPanel { // Thay đổi từ JFrame sang JPanel
 
             int confirm = JOptionPane.showConfirmDialog(
                     this,
-                    "Bạn có chắc muốn xóa sách này?",
-                    "Xác nhận",
-                    JOptionPane.YES_NO_OPTION
+                    "Bạn có chắc muốn xóa sách này (bao gồm cả lịch sử mượn)?",
+                    "Xác nhận xóa",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE // Thêm icon cảnh báo
             );
 
             if (confirm == JOptionPane.YES_OPTION) {
-                bookDAO.deleteBook(bookId);
-                reload.run();
-                parentFrame.refreshAll(); // Gọi refreshAll()
-                JOptionPane.showMessageDialog(this, "Đã xóa sách thành công!");
+                // BẮT BUỘC phải có try-catch ở đây
+                try {
+                    // Gọi hàm deleteBook đã sửa (có transaction)
+                    bookDAO.deleteBook(bookId);
+
+                    // Chỉ chạy những dòng này NẾU try thành công
+                    reload.run();
+                    parentFrame.refreshAll();
+                    JOptionPane.showMessageDialog(this, "Đã xóa sách thành công!");
+
+                } catch (Exception ex) {
+                    // Nếu 'deleteBook' ném lỗi (ví dụ: transaction thất bại)
+                    // Lỗi sẽ được hiển thị cho người dùng
+                    JOptionPane.showMessageDialog(this, "❌ Lỗi khi xóa sách: " + ex.getMessage(), "Lỗi SQL", JOptionPane.ERROR_MESSAGE);
+                    ex.printStackTrace();
+                }
             }
         });
 
