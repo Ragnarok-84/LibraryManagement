@@ -1,0 +1,251 @@
+/* ===============================
+   LIBRARY MANAGEMENT THEME (FX)
+   =============================== */
+
+.root {
+    -fx-font-family: "Segoe UI", "Inter", "SF Pro Display";
+    -fx-background-color: #f9fafc;
+}
+
+/* --- SIDEBAR & NAVIGATION --- */
+.sidebar {
+    -fx-background-color: linear-gradient(to bottom, #A31D2E, #C74353);
+    -fx-background-radius: 0 24 24 0;
+    -fx-effect: dropshadow(gaussian, rgba(19, 14, 40, 0.35), 20, 0.25, 0, 0);
+}
+
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: rgba(255, 255, 255, 0.78);
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-padding: 12 18;
+    -fx-background-radius: 16;
+    -fx-alignment: center-left;
+    -fx-graphic-text-gap: 12;
+}
+
+.nav-button:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.16);
+    -fx-text-fill: white;
+}
+
+.nav-button:selected {
+    -fx-background-color: linear-gradient(to right, #E53935, #F87171);
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(gaussian, rgba(245, 80, 80, 0.5), 14, 0.4, 0, 3);
+}
+
+.brand {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+}
+
+/* --- PAGE TITLES --- */
+.page-title {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #222;
+}
+
+.page-subtitle {
+    -fx-font-size: 14px;
+    -fx-text-fill: #666;
+}
+
+/* --- CARD CONTAINERS --- */
+.card, .elevated-card {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-padding: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 10, 0.3, 0, 2);
+}
+
+.card-heading {
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #2f365f;
+}
+
+.metric-card {
+    -fx-padding: 20 24;
+    -fx-background-radius: 18;
+    -fx-spacing: 8;
+    -fx-alignment: center;
+    -fx-effect: dropshadow(gaussian, rgba(124, 58, 237, 0.15), 16, 0.4, 0, 6);
+}
+
+.metric-card .label {
+    -fx-text-alignment: center;
+}
+
+.metric-card.accent-primary {
+    -fx-background-color: linear-gradient(to bottom right, #7c3aed, #6366f1);
+}
+
+.metric-card.accent-success {
+    -fx-background-color: linear-gradient(to bottom right, #10b981, #22d3ee);
+}
+
+.metric-card.accent-info {
+    -fx-background-color: linear-gradient(to bottom right, #3b82f6, #06b6d4);
+}
+
+.metric-title {
+    -fx-text-fill: rgba(255, 255, 255, 0.85);
+    -fx-font-size: 14px;
+    -fx-letter-spacing: 0.4px;
+}
+
+.metric-value {
+    -fx-text-fill: white;
+    -fx-font-size: 30px;
+    -fx-font-weight: 700;
+}
+
+.stat-list {
+    -fx-background-color: rgba(99, 102, 241, 0.05);
+    -fx-background-radius: 12;
+    -fx-border-color: rgba(99, 102, 241, 0.18);
+    -fx-border-radius: 12;
+    -fx-padding: 8;
+}
+
+.stat-list .list-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 8 12;
+    -fx-text-fill: #2f365f;
+    -fx-font-weight: 500;
+}
+
+.stat-list .list-cell:filled:selected, .stat-list .list-cell:filled:hover {
+    -fx-background-color: rgba(124, 58, 237, 0.12);
+    -fx-text-fill: #1f2a6b;
+}
+
+/* --- BUTTONS --- */
+.button {
+    -fx-font-size: 13px;
+    -fx-font-weight: 500;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+
+.filled-button {
+    -fx-text-fill: white;
+    -fx-background-color: linear-gradient(to bottom, #4a90e2, #357ae8);
+}
+
+.filled-button:hover {
+    -fx-background-color: linear-gradient(to bottom, #5aa0f3, #3c84eb);
+}
+
+.filled-button.primary {
+    -fx-background-color: linear-gradient(to bottom, #4a90e2, #357ae8);
+}
+
+.filled-button.soft {
+    -fx-background-color: linear-gradient(to bottom, #7cb342, #689f38);
+}
+
+.filled-button.danger {
+    -fx-background-color: linear-gradient(to bottom, #e53935, #c62828);
+}
+
+.ghost-button {
+    -fx-background-color: transparent;
+    -fx-border-color: #ccc;
+    -fx-border-radius: 6;
+}
+
+/* --- TEXTFIELDS & SEARCH --- */
+.text-field, .search-field {
+    -fx-background-color: white;
+    -fx-border-color: #ccc;
+    -fx-border-radius: 4;
+    -fx-padding: 6 8;
+}
+
+.search-field:focused {
+    -fx-border-color: #4a90e2;
+}
+
+/* --- TABLEVIEW --- */
+.table-view {
+    -fx-background-color: white;
+    -fx-border-color: #ddd;
+    -fx-border-radius: 6;
+    -fx-padding: 4;
+}
+
+.table-view .column-header {
+    -fx-font-weight: bold;
+    -fx-background-color: #f2f4f7;
+}
+
+/* --- STATUS CHIPS --- */
+.status-chip {
+    -fx-padding: 3 8;
+    -fx-background-radius: 12;
+    -fx-font-size: 12px;
+    -fx-text-fill: white;
+}
+
+.chip-success {
+    -fx-background-color: #43a047;
+}
+
+.chip-danger {
+    -fx-background-color: #e53935;
+}
+
+.chip-info {
+    -fx-background-color: #039be5;
+}
+
+/* --- DIALOGS --- */
+.dialog-pane {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+}
+
+/* --- TEXTAREA CODE STYLE --- */
+.code-area {
+    -fx-font-family: "Consolas", "Menlo", monospace;
+    -fx-font-size: 13px;
+    -fx-control-inner-background: #f5f7fa;
+    -fx-border-color: #ddd;
+    -fx-border-radius: 6;
+}
+/* --- CUSTOM SCROLLBAR STYLE --- */
+.scroll-bar {
+    -fx-background-color: transparent; /* bỏ nền */
+}
+
+.scroll-bar:vertical, .scroll-bar:horizontal {
+    -fx-pref-width: 6;    /* độ dày dọc */
+    -fx-pref-height: 6;   /* độ dày ngang */
+}
+
+.scroll-bar .track {
+    -fx-background-color: transparent; /* nền rãnh */
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: rgba(0, 0, 0, 0.25); /* màu thanh cuộn */
+    -fx-background-radius: 4;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: rgba(0, 0, 0, 0.45); /* hover đậm hơn tí */
+}
+
+/* Ẩn 2 nút tam giác đầu/cuối */
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-opacity: 0;
+    -fx-padding: 0;
+    -fx-shape: null;
+}
+
