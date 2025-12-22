@@ -6,7 +6,6 @@ import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import model.Reader;
 
-import java.time.LocalDate;
 import java.util.Objects;
 
 public class ReaderForm extends Dialog<Reader> {
@@ -15,7 +14,6 @@ public class ReaderForm extends Dialog<Reader> {
     private final TextField emailField = new TextField();
     private final TextField phoneField = new TextField();
     private final TextField addressField = new TextField();
-    private final DatePicker joinDatePicker = new DatePicker();
     private final CheckBox activeBox = new CheckBox("Đang hoạt động");
 
     private final Reader original;
@@ -41,7 +39,7 @@ public class ReaderForm extends Dialog<Reader> {
         emailField.setPromptText("Email");
         phoneField.setPromptText("Số điện thoại");
         addressField.setPromptText("Địa chỉ");
-        joinDatePicker.setPromptText("Ngày tham gia");
+        // joinDatePicker.setPromptText("Ngày tham gia");
 
         grid.add(new Label("Họ tên"), 0, 0);
         grid.add(nameField, 1, 0);
@@ -52,7 +50,7 @@ public class ReaderForm extends Dialog<Reader> {
         grid.add(new Label("Địa chỉ"), 0, 3);
         grid.add(addressField, 1, 3);
         grid.add(new Label("Ngày tham gia"), 0, 4);
-        grid.add(joinDatePicker, 1, 4);
+        // grid.add(joinDatePicker, 1, 4);
         grid.add(activeBox, 1, 5);
 
         getDialogPane().setContent(grid);
@@ -63,7 +61,6 @@ public class ReaderForm extends Dialog<Reader> {
         if (reader != null) {
             populate(reader);
         } else {
-            joinDatePicker.setValue(LocalDate.now());
             activeBox.setSelected(true);
         }
 
@@ -86,7 +83,6 @@ public class ReaderForm extends Dialog<Reader> {
         emailField.setText(reader.getEmail());
         phoneField.setText(reader.getPhone());
         addressField.setText(reader.getAddress());
-        joinDatePicker.setValue(reader.getJoinDate());
         activeBox.setSelected(reader.isActive());
     }
 
@@ -124,7 +120,6 @@ public class ReaderForm extends Dialog<Reader> {
         reader.setEmail(emailField.getText() != null ? emailField.getText().trim() : null);
         reader.setPhone(phoneField.getText() != null ? phoneField.getText().trim() : null);
         reader.setAddress(addressField.getText() != null ? addressField.getText().trim() : null);
-        reader.setJoinDate(joinDatePicker.getValue() != null ? joinDatePicker.getValue() : LocalDate.now());
         reader.setActive(activeBox.isSelected());
         return reader;
     }

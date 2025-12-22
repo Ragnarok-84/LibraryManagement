@@ -67,7 +67,7 @@ public class ReportsPage extends BorderPane {
                 createCard("Top sách được mượn nhiều", topBooksList),
                 createCard("Độc giả tích cực", topReadersList));
         listRow.setPrefHeight(220);
-        listRow.setAlignment(Pos.CENTER); // ✅ căn giữa 2 cục
+        listRow.setAlignment(Pos.CENTER);
 
 // Tùy chọn: cho 2 ô to và đều hơn
         for (Node node : listRow.getChildren()) {

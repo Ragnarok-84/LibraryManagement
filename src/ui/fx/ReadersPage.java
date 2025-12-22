@@ -17,7 +17,7 @@ import javafx.scene.layout.VBox;
 import model.Reader;
 import ui.fx.components.PagedTableView;
 
-import java.time.format.DateTimeFormatter;
+
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -117,6 +117,7 @@ public class ReadersPage extends BorderPane {
         TableColumn<Reader, String> addressCol = new TableColumn<>("Địa chỉ");
         addressCol.setCellValueFactory(new PropertyValueFactory<>("address"));
 
+        /*
         TableColumn<Reader, String> joinDateCol = new TableColumn<>("Ngày tham gia");
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         joinDateCol.setCellValueFactory(cell -> {
@@ -126,6 +127,7 @@ public class ReadersPage extends BorderPane {
             return new javafx.beans.property.SimpleStringProperty(cell.getValue().getJoinDate().format(formatter));
         });
         joinDateCol.setStyle("-fx-alignment: CENTER;");   // căn giữa ngày tham gia
+*/
 
         TableColumn<Reader, Boolean> activeCol = new TableColumn<>("Trạng thái");
         activeCol.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue().isActive()));
@@ -145,7 +147,7 @@ public class ReadersPage extends BorderPane {
             }
         });
 
-        table.getColumns().addAll(idCol, nameCol, emailCol, phoneCol, addressCol, joinDateCol, activeCol);
+        table.getColumns().addAll(idCol, nameCol, emailCol, phoneCol, addressCol, activeCol);
     }
 
     private void configureSearch() {
