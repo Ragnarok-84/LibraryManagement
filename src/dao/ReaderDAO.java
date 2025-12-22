@@ -147,16 +147,64 @@ public class ReaderDAO extends BaseDAO<Reader> {
     // 5️⃣ DELETE: Xóa độc giả
     // ===============================================================
     public void deleteReader(int readerID) {
-        final String SQL = "DELETE FROM readers WHERE reader_id=?";
+        // 1. Khai báo các câu lệnh SQL
+        String deleteBorrowSql = "DELETE FROM borrow_records WHERE reader_id = ?";
+        String deleteReaderSql = "DELETE FROM readers WHERE reader_id = ?";
 
-        try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(SQL)) {
+        Connection conn = null; // Khai báo kết nối ở ngoài để quản lý transaction
 
-            stmt.setInt(1, readerID);
-            stmt.executeUpdate();
-            System.out.println("✅ Đã xóa độc giả ID=" + readerID);
+        try {
+            // 2. Lấy kết nối và TẮT chế độ auto-commit
+            conn = getConnection();
+            if (conn == null) {
+                // Xử lý nếu không lấy được kết nối (tùy chọn ném lỗi hoặc log)
+                System.err.println("❌ Không thể kết nối đến database.");
+                return;
+            }
+            conn.setAutoCommit(false); // <-- BẮT ĐẦU TRANSACTION
+
+            // 3. Xóa các bản ghi mượn sách liên quan TRƯỚC (bảng borrow_records)
+            try (PreparedStatement stmtBorrow = conn.prepareStatement(deleteBorrowSql)) {
+                stmtBorrow.setInt(1, readerID);
+                stmtBorrow.executeUpdate();
+                // System.out.println("Đã xóa lịch sử mượn của độc giả ID: " + readerID);
+            }
+
+            // 4. Xóa độc giả (bảng readers)
+            try (PreparedStatement stmtReader = conn.prepareStatement(deleteReaderSql)) {
+                stmtReader.setInt(1, readerID);
+                int affectedRows = stmtReader.executeUpdate();
+
+                if (affectedRows == 0) {
+                    // Nếu không xóa được (ID không tồn tại), có thể ném lỗi để rollback nếu muốn chặt chẽ
+                    throw new SQLException("Xóa thất bại, không tìm thấy reader_id = " + readerID);
+                }
+            }
+
+            // 5. Nếu cả hai lệnh trên thành công, LƯU (commit) transaction
+            conn.commit();
+            System.out.println("✅ Đã xóa độc giả và toàn bộ lịch sử mượn thành công (ID=" + readerID + ")");
+
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi xóa độc giả: " + e.getMessage());
+            // 6. Nếu có BẤT KỲ lỗi nào xảy ra, HỦY BỎ (rollback) toàn bộ thay đổi
+            System.err.println("❌ Lỗi SQL khi xóa độc giả, đang rollback... " + e.getMessage());
+            if (conn != null) {
+                try {
+                    conn.rollback(); // <-- HỦY BỎ TRANSACTION
+                } catch (SQLException ex) {
+                    System.err.println("Lỗi khi rollback: " + ex.getMessage());
+                }
+            }
+        } finally {
+            // 7. Luôn dọn dẹp kết nối và bật lại auto-commit
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true); // Trả lại trạng thái auto-commit mặc định
+                    conn.close(); // Đóng kết nối
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
