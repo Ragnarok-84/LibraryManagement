@@ -98,7 +98,7 @@ public class BorrowForm extends Dialog<BorrowRecord> {
                 record.setBookID(bookBox.getValue().getBookID());
                 record.setBorrowDate(borrowDatePicker.getValue());
                 record.setDueDate(dueDatePicker.getValue());
-                record.setStatus("borrowed");
+                record.setStatus("BORROWING");
                 return record;
             }
             return null;

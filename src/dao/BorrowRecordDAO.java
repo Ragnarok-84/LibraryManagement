@@ -92,7 +92,7 @@ public class BorrowRecordDAO extends BaseDAO<BorrowRecord> {
     // 3️⃣ UPDATE: Cập nhật trả sách (hoặc trạng thái)
     // ===============================================================
     public void updateReturnStatus(int recordID, LocalDate returnDate, String status) {
-        final String SQL = "UPDATE borrow_records SET return_date=?, status=? WHERE recordID=?";
+        final String SQL = "UPDATE borrow_records SET return_date=?, status=? WHERE record_id=?";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(SQL)) {
@@ -112,7 +112,9 @@ public class BorrowRecordDAO extends BaseDAO<BorrowRecord> {
     // ✅ 3️⃣.1 MARK RETURNED: Dành cho UI gọi khi ấn nút "Trả sách"
     // ===============================================================
     public void markReturned(int recordID) {
-        final String SQL = "UPDATE borrow_records SET return_date = CURDATE(), status = 'Đã trả' WHERE recordID = ?";
+        // SỬA: WHERE recordID=? -> WHERE record_id=?
+        // Thêm update sách: Có thể bạn muốn tăng số lượng sách available lên 1 ở đây (nếu cần)
+        final String SQL = "UPDATE borrow_records SET return_date = CURDATE(), status = 'RETURNED' WHERE record_id = ?";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(SQL)) {
@@ -122,7 +124,7 @@ public class BorrowRecordDAO extends BaseDAO<BorrowRecord> {
             if (affected > 0) {
                 System.out.println("✅ Đánh dấu trả sách thành công cho recordID=" + recordID);
             } else {
-                System.out.println("⚠️ Không tìm thấy recordID: " + recordID);
+                System.out.println("⚠️ Không tìm thấy recordID: " + recordID + " (Kiểm tra lại tên cột ID trong DB)");
             }
         } catch (SQLException e) {
             System.err.println("❌ Lỗi SQL khi đánh dấu trả sách: " + e.getMessage());
@@ -156,7 +158,8 @@ public class BorrowRecordDAO extends BaseDAO<BorrowRecord> {
     // 5️⃣ DELETE: Xóa bản ghi mượn
     // ===============================================================
     public void deleteRecord(int recordID) {
-        final String SQL = "DELETE FROM borrow_records WHERE recordID=?";
+        // SỬA: WHERE recordID=? -> WHERE record_id=?
+        final String SQL = "DELETE FROM borrow_records WHERE record_id=?";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(SQL)) {
