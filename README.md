@@ -35,48 +35,41 @@ LibraryManagement là một hệ thống quản lý thư viện số giúp quả
 + Thiết kế bằng CSS, hoạt động tốt trên nhiều thiết bị
 
 🛠️ Hướng dẫn cài đặt
-Yêu cầu môi trường
+Yêu cầu môi trường: Đảm bảo máy bạn đã cài
 
-Đảm bảo máy bạn đã cài:
++ Java JDK 11 trở lên
 
-Java JDK 11 trở lên
-
-Apache Maven 3.6 trở lên
++ Apache Maven 3.6 trở lên
 
 Các bước cài đặt
 
 1️⃣ Clone project từ GitHub
-git clone https://github.com/Ragnarok-84/LibraryManagement.git
++ git clone https://github.com/Ragnarok-84/LibraryManagement.git
 
 2️⃣ Di chuyển vào thư mục project
-cd LibraryManagement
++ cd LibraryManagement
 
 3️⃣ Build project bằng Maven
 
-Lệnh này sẽ tải các thư viện cần thiết và tạo file .jar trong thư mục target/:
-
-mvn clean install
++ Lệnh này sẽ tải các thư viện cần thiết và tạo file .jar trong thư mục target/: mvn clean install
 
 4️⃣ Chạy chương trình
-java -jar target/LibraryManagement-1.0-SNAPSHOT.jar
++ java -jar target/LibraryManagement-1.0-SNAPSHOT.jar
 
 
 ⚠️ Tên file .jar có thể khác tùy cấu hình trong pom.xml
 
 🚀 Cách sử dụng
 
-Khởi động ứng dụng
++ Khởi động ứng dụng
 
-Sau khi chạy, chương trình sẽ mở giao diện đồ họa hoặc khởi động hệ thống backend.
-
-[INFO] Starting Library Management Application...
-[INFO] GUI initialized.
++ Sau khi chạy, chương trình sẽ mở giao diện đồ họa hoặc khởi động hệ thống backend.
 
 Các thao tác cơ bản
 
-Thêm sách mới: Vào mục Quản lý sách, nhập thông tin sách
++ Thêm sách mới: Vào mục Quản lý sách, nhập thông tin sách
 
-Thêm thành viên: Vào mục Quản lý người dùng, nhập thông tin thành viên
++ Thêm thành viên: Vào mục Quản lý người dùng, nhập thông tin thành viên
 
-Mượn sách: Chọn thành viên và sách còn trống → xác nhận mượn
++ Mượn sách: Chọn thành viên và sách còn trống → xác nhận mượn
 
