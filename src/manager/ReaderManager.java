@@ -18,12 +18,12 @@ public class ReaderManager implements Searchable<Reader>, Reportable<Reader> {
 
     public void addReader(Reader reader) {
         // Them logic kiem tra du lieu dau vao hop le tai day.
-        System.out.println("✅ Dang them doc gia: " + reader.getName() + " qua DAO.");
+        System.out.println("Dang them doc gia: " + reader.getName() + " qua DAO.");
         readerDAO.add(reader);
     }
 
     public void removeReader(int id) {
-        System.out.println("✅ Da xoa doc gia co ID " + id);
+        System.out.println("Da xoa doc gia co ID " + id);
         readerDAO.delete(id);
     }
 

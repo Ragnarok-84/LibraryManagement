@@ -23,9 +23,6 @@ public class BookDAO extends BaseDAO<Book> {
         book.setNumPages(rs.getInt("num_pages"));
         String dateStr = rs.getString("publication_date");
         book.setPublisher(rs.getString("publisher"));
-        //book.setTotal(rs.getInt("total"));
-        //book.setAvailable(rs.getInt("available"));
-        //book.setBorrowedCount(book.getTotal() - book.getAvailable());
         if (dateStr != null && !dateStr.trim().isEmpty()) {
             book.setPublicationDate(LocalDate.parse(dateStr));
         } else {
@@ -39,7 +36,7 @@ public class BookDAO extends BaseDAO<Book> {
 
 
     // =========================================================================
-    // === 1️⃣ CREATE: Thêm sách mới vào Database ===
+    // === CREATE: Thêm sách mới vào Database ===
     // =========================================================================
     public void addBook(Book book) throws SQLException {
         // CÁC CỘT:    (1-title, 2-authors, 3-average_rating, 4-isbn, 5-language_code, 6-num_pages, 7-publication_date, 8-publisher, 9-total, 10-available)
@@ -62,17 +59,15 @@ public class BookDAO extends BaseDAO<Book> {
 
             int affectedRows = stmt.executeUpdate();
             if (affectedRows > 0) {
-                System.out.println("✅ Thêm sách thành công (ghi vào MySQL).");
+                System.out.println("Thêm sách thành công (ghi vào MySQL).");
             }
         }
-        // Khi có lỗi SQLException, nó sẽ tự động được ném ra cho BookUI bắt
     }
 
 
     // =========================================================================
-    // === 2️⃣ READ: Lấy toàn bộ danh sách sách từ Database ===
+    // === READ: Lấy toàn bộ danh sách sách từ Database ===
     // =========================================================================
-    // Trong BookDAO.java
 
     public List<Book> getAllBooks() {
         final String SQL = "SELECT book_id, title, authors, average_rating,isbn, language_code, num_pages,  publication_date, publisher FROM books ORDER BY title ASC";
@@ -87,16 +82,15 @@ public class BookDAO extends BaseDAO<Book> {
                 books.add(mapRowToEntity(rs));
             }
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi đọc sách: " + e.getMessage());
+            System.err.println("Lỗi SQL khi đọc sách: " + e.getMessage());
         }
         return books;
     }
 
     // =========================================================================
-    // === 3️⃣ READ: Tìm sách theo ISBN ===
+    // === READ: Tìm sách theo ISBN ===
     // =========================================================================
     public Book findByISBN(String isbn) {
-        // Cần liệt kê tất cả các cột
         final String SQL = "SELECT book_id, title, authors, average_rating,isbn, language_code, num_pages,  publication_date, publisher, total, available FROM books WHERE isbn = ?";
 
         try (Connection conn = getConnection();
@@ -110,13 +104,13 @@ public class BookDAO extends BaseDAO<Book> {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi tìm sách theo ISBN: " + e.getMessage());
+            System.err.println("Lỗi SQL khi tìm sách theo ISBN: " + e.getMessage());
         }
         return null;
     }
 
     // =========================================================================
-    // === 4️⃣ UPDATE: Cập nhật thông tin sách ===
+    // === UPDATE: Cập nhật thông tin sách ===
     // =========================================================================
     public void updateBook(Book book) {
         String sql = "UPDATE books SET title = ?, authors = ?, isbn = ?, publisher = ?, num_pages = ?, publication_date = ?, total = ?, available = ? WHERE book_id = ?";
@@ -137,13 +131,8 @@ public class BookDAO extends BaseDAO<Book> {
         }
     }
 
-
-    // Trong BookDAO.java
-
-// ... (sau các phương thức khác như updateBook)
-
-    // =========================================================================
-// === 5️⃣ READ: Tìm kiếm sách theo từ khóa (Sử dụng SQL LIKE) ===
+// =========================================================================
+// === READ: Tìm kiếm sách theo từ khóa (Sử dụng SQL LIKE) ===
 // =========================================================================
     public List<Book> searchBooks(String query) {
         List<Book> books = new ArrayList<>();
@@ -170,7 +159,7 @@ public class BookDAO extends BaseDAO<Book> {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi tìm kiếm sách: " + e.getMessage());
+            System.err.println("Lỗi SQL khi tìm kiếm sách: " + e.getMessage());
         }
         return books;
     }
@@ -190,7 +179,7 @@ public class BookDAO extends BaseDAO<Book> {
             }
 
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi lấy tên sách: " + e.getMessage());
+            System.err.println("Lỗi SQL khi lấy tên sách: " + e.getMessage());
         }
 
         return "(Không rõ)"; // trả về mặc định nếu không tìm thấy
@@ -215,8 +204,6 @@ public class BookDAO extends BaseDAO<Book> {
             try (PreparedStatement stmtBorrow = conn.prepareStatement(deleteBorrowSql)) {
                 stmtBorrow.setInt(1, bookId);
                 stmtBorrow.executeUpdate();
-                // Bạn có thể in ra console để theo dõi (không bắt buộc)
-                // System.out.println("Đã xóa các bản ghi mượn sách của book_id: " + bookId);
             }
 
             // 4. Xóa sách
@@ -224,15 +211,12 @@ public class BookDAO extends BaseDAO<Book> {
                 stmtBook.setInt(1, bookId);
                 int affectedRows = stmtBook.executeUpdate();
                 if (affectedRows == 0) {
-                    // Nếu không xóa được sách nào (ví dụ: book_id không tồn tại)
-                    // ta cũng nên rollback
                     throw new SQLException("Xóa sách thất bại, không tìm thấy book_id = " + bookId);
                 }
             }
 
             // 5. Nếu cả hai lệnh trên thành công, LƯU (commit) transaction
             conn.commit();
-            // System.out.println("Đã xóa sách và các bản ghi mượn liên quan thành công.");
 
         } catch (SQLException e) {
             // 6. Nếu có BẤT KỲ lỗi nào xảy ra, HỦY BỎ (rollback) toàn bộ thay đổi
@@ -290,7 +274,7 @@ public class BookDAO extends BaseDAO<Book> {
             stmt.setInt(1, id);
             stmt.executeUpdate();
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi xóa " + getTableName() + ": " + e.getMessage());
+            System.err.println("Lỗi SQL khi xóa " + getTableName() + ": " + e.getMessage());
         }
     }
 
@@ -305,7 +289,7 @@ public class BookDAO extends BaseDAO<Book> {
                 list.add(mapRowToEntity(rs));
             }
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi khi lấy danh sách sách: " + e.getMessage());
+            System.err.println("Lỗi khi lấy danh sách sách: " + e.getMessage());
         }
         return list;
     }
@@ -319,13 +303,13 @@ public class BookDAO extends BaseDAO<Book> {
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     Book book = mapRowToEntity(rs);
-                    return Optional.of(book); // ✅ tìm thấy, trả về Optional chứa Book
+                    return Optional.of(book); // tìm thấy, trả về Optional chứa Book
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return Optional.empty(); // ❌ không tìm thấy
+        return Optional.empty(); // không tìm thấy
     }
 
     @Override
@@ -368,7 +352,7 @@ public class BookDAO extends BaseDAO<Book> {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi thêm sách: " + e.getMessage());
+            System.err.println("Lỗi SQL khi thêm sách: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -398,11 +382,11 @@ public class BookDAO extends BaseDAO<Book> {
             // Thực thi câu lệnh cập nhật
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected == 0) {
-                System.out.println("⚠️ Cảnh báo: Không tìm thấy sách với ID = " + book.getBookID() + " để cập nhật.");
+                System.out.println("Cảnh báo: Không tìm thấy sách với ID = " + book.getBookID() + " để cập nhật.");
             }
 
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi cập nhật sách: " + e.getMessage());
+            System.err.println("Lỗi SQL khi cập nhật sách: " + e.getMessage());
             e.printStackTrace();
         }
     }

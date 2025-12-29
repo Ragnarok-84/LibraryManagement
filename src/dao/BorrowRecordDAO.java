@@ -42,7 +42,7 @@ public class BorrowRecordDAO extends BaseDAO<BorrowRecord> {
     }
 
     // ===============================================================
-    // 1️⃣ CREATE: Thêm bản ghi mượn sách
+    // CREATE: Thêm bản ghi mượn sách
     // ===============================================================
     public void addBorrowRecord(BorrowRecord record) {
         final String SQL = "INSERT INTO borrow_records (reader_id, book_id, borrow_date, due_date, return_date, status) VALUES (?, ?, ?, ?, ?, ?)";
@@ -62,14 +62,14 @@ public class BorrowRecordDAO extends BaseDAO<BorrowRecord> {
             stmt.setString(6, record.getStatus());
 
             stmt.executeUpdate();
-            System.out.println("✅ Thêm bản ghi mượn thành công!");
+            System.out.println("Thêm bản ghi mượn thành công!");
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi thêm bản ghi mượn: " + e.getMessage());
+            System.err.println("Lỗi SQL khi thêm bản ghi mượn: " + e.getMessage());
         }
     }
 
     // ===============================================================
-    // 2️⃣ READ: Lấy danh sách tất cả bản ghi mượn
+    // READ: Lấy danh sách tất cả bản ghi mượn
     // ===============================================================
     public List<BorrowRecord> getAllRecords() {
         List<BorrowRecord> list = new ArrayList<>();
@@ -83,13 +83,13 @@ public class BorrowRecordDAO extends BaseDAO<BorrowRecord> {
                 list.add(mapRowToEntity(rs));
             }
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi đọc danh sách mượn: " + e.getMessage());
+            System.err.println("Lỗi SQL khi đọc danh sách mượn: " + e.getMessage());
         }
         return list;
     }
 
     // ===============================================================
-    // 3️⃣ UPDATE: Cập nhật trả sách (hoặc trạng thái)
+    // UPDATE: Cập nhật trả sách (hoặc trạng thái)
     // ===============================================================
     public void updateReturnStatus(int recordID, LocalDate returnDate, String status) {
         final String SQL = "UPDATE borrow_records SET return_date=?, status=? WHERE record_id=?";
@@ -102,14 +102,14 @@ public class BorrowRecordDAO extends BaseDAO<BorrowRecord> {
             stmt.setInt(3, recordID);
             stmt.executeUpdate();
 
-            System.out.println("✅ Cập nhật trạng thái mượn/trả thành công!");
+            System.out.println("Cập nhật trạng thái mượn/trả thành công!");
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi cập nhật trạng thái mượn: " + e.getMessage());
+            System.err.println("Lỗi SQL khi cập nhật trạng thái mượn: " + e.getMessage());
         }
     }
 
     // ===============================================================
-    // ✅ 3️⃣.1 MARK RETURNED: Dành cho UI gọi khi ấn nút "Trả sách"
+    // MARK RETURNED: Dành cho UI gọi khi ấn nút "Trả sách"
     // ===============================================================
     public void markReturned(int recordID) {
         // SỬA: WHERE recordID=? -> WHERE record_id=?
@@ -122,17 +122,17 @@ public class BorrowRecordDAO extends BaseDAO<BorrowRecord> {
             stmt.setInt(1, recordID);
             int affected = stmt.executeUpdate();
             if (affected > 0) {
-                System.out.println("✅ Đánh dấu trả sách thành công cho recordID=" + recordID);
+                System.out.println("Đánh dấu trả sách thành công cho recordID=" + recordID);
             } else {
-                System.out.println("⚠️ Không tìm thấy recordID: " + recordID + " (Kiểm tra lại tên cột ID trong DB)");
+                System.out.println("Không tìm thấy recordID: " + recordID + " (Kiểm tra lại tên cột ID trong DB)");
             }
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi đánh dấu trả sách: " + e.getMessage());
+            System.err.println("Lỗi SQL khi đánh dấu trả sách: " + e.getMessage());
         }
     }
 
     // ===============================================================
-    // 4️⃣ READ: Lấy lịch sử mượn của một độc giả
+    // READ: Lấy lịch sử mượn của một độc giả
     // ===============================================================
     public List<BorrowRecord> getRecordsByReader(int readerID) {
         List<BorrowRecord> list = new ArrayList<>();
@@ -149,13 +149,13 @@ public class BorrowRecordDAO extends BaseDAO<BorrowRecord> {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi lấy lịch sử mượn: " + e.getMessage());
+            System.err.println("Lỗi SQL khi lấy lịch sử mượn: " + e.getMessage());
         }
         return list;
     }
 
     // ===============================================================
-    // 5️⃣ DELETE: Xóa bản ghi mượn
+    // DELETE: Xóa bản ghi mượn
     // ===============================================================
     public void deleteRecord(int recordID) {
         // SỬA: WHERE recordID=? -> WHERE record_id=?
@@ -166,14 +166,14 @@ public class BorrowRecordDAO extends BaseDAO<BorrowRecord> {
 
             stmt.setInt(1, recordID);
             stmt.executeUpdate();
-            System.out.println("✅ Xóa bản ghi mượn thành công!");
+            System.out.println("Xóa bản ghi mượn thành công!");
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi xóa bản ghi mượn: " + e.getMessage());
+            System.err.println("Lỗi SQL khi xóa bản ghi mượn: " + e.getMessage());
         }
     }
 
     // ===============================================================
-// 6️⃣ REPORTS: Top sách và độc giả
+// REPORTS: Top sách và độc giả
 // ===============================================================
     public Map<String, Integer> getTopBooks(int limit) {
         Map<String, Integer> result = new LinkedHashMap<>();
@@ -196,7 +196,7 @@ public class BorrowRecordDAO extends BaseDAO<BorrowRecord> {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi lấy top sách: " + e.getMessage());
+            System.err.println("Lỗi SQL khi lấy top sách: " + e.getMessage());
         }
         return result;
     }
@@ -222,13 +222,13 @@ public class BorrowRecordDAO extends BaseDAO<BorrowRecord> {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi lấy top độc giả: " + e.getMessage());
+            System.err.println("Lỗi SQL khi lấy top độc giả: " + e.getMessage());
         }
         return result;
     }
 
     // ===============================================================
-// 7️⃣ COUNT & REPORT HELPERS
+// COUNT & REPORT HELPERS
 // ===============================================================
 
     public int countBorrowing() {
@@ -238,7 +238,7 @@ public class BorrowRecordDAO extends BaseDAO<BorrowRecord> {
              ResultSet rs = stmt.executeQuery(SQL)) {
             if (rs.next()) return rs.getInt(1);
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi đếm số lượt mượn: " + e.getMessage());
+            System.err.println("Lỗi SQL khi đếm số lượt mượn: " + e.getMessage());
         }
         return 0;
     }
@@ -254,7 +254,7 @@ public class BorrowRecordDAO extends BaseDAO<BorrowRecord> {
              ResultSet rs = stmt.executeQuery(SQL)) {
             while (rs.next()) list.add(mapRowToEntity(rs));
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi lấy danh sách quá hạn: " + e.getMessage());
+            System.err.println("Lỗi SQL khi lấy danh sách quá hạn: " + e.getMessage());
         }
         return list;
     }
@@ -270,7 +270,7 @@ public class BorrowRecordDAO extends BaseDAO<BorrowRecord> {
                 while (rs.next()) list.add(mapRowToEntity(rs));
             }
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi lấy bản ghi gần đây: " + e.getMessage());
+            System.err.println("Lỗi SQL khi lấy bản ghi gần đây: " + e.getMessage());
         }
         return list;
     }
@@ -304,7 +304,7 @@ public class BorrowRecordDAO extends BaseDAO<BorrowRecord> {
                 list.add(br);
             }
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi lấy danh sách phiếu mượn: " + e.getMessage());
+            System.err.println("Lỗi SQL khi lấy danh sách phiếu mượn: " + e.getMessage());
         }
         return list;
     }
@@ -322,7 +322,7 @@ public class BorrowRecordDAO extends BaseDAO<BorrowRecord> {
                 list.add(mapRowToEntity(rs));
             }
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi khi lấy danh sách bản ghi: " + e.getMessage());
+            System.err.println("Lỗi khi lấy danh sách bản ghi: " + e.getMessage());
         }
         return list;
     }
@@ -342,7 +342,7 @@ public class BorrowRecordDAO extends BaseDAO<BorrowRecord> {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return Optional.empty(); // ❌ không tìm thấy
+        return Optional.empty(); // không tìm thấy
     }
 
     @Override
@@ -353,7 +353,7 @@ public class BorrowRecordDAO extends BaseDAO<BorrowRecord> {
             stmt.setInt(1, id);
             stmt.executeUpdate();
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi xóa " + getTableName() + ": " + e.getMessage());
+            System.err.println("Lỗi SQL khi xóa " + getTableName() + ": " + e.getMessage());
         }
     }
 

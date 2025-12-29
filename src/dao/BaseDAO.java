@@ -22,7 +22,7 @@ public abstract class BaseDAO<T> implements DAO<T> {
     protected abstract String getTableName();
     protected abstract String getIdColumnName();
 
-    // ===== ✅ Xóa bản ghi theo ID =====
+    // ===== Xóa bản ghi theo ID =====
     @Override
     public void delete(int id) {
         String sql = "DELETE FROM " + getTableName() + " WHERE " + getIdColumnName() + " = ?";
@@ -31,7 +31,7 @@ public abstract class BaseDAO<T> implements DAO<T> {
             stmt.setInt(1, id);
             stmt.executeUpdate();
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi xóa " + getTableName() + ": " + e.getMessage());
+            System.err.println("Lỗi SQL khi xóa " + getTableName() + ": " + e.getMessage());
         }
     }
 

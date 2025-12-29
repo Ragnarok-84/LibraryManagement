@@ -26,17 +26,17 @@ public class BookManager implements Searchable<Book>, Reportable<Book> {
     // --- Chuc nang quan ly co ban (CRUD duoc chuyen tu in-memory map sang DAO) ---
 
     public void addBook(Book newBook) {
-        System.out.println("✅ Dang them sach: " + newBook.getTitle() + " qua DAO.");
+        System.out.println("Dang them sach: " + newBook.getTitle() + " qua DAO.");
         bookDAO.add(newBook);
     }
 
     public void removeBook(String isbn) {
         Book bookToRemove = findBookByIsbn(isbn);
         if (bookToRemove != null) {
-            System.out.println("✅ Da xoa sach co ISBN " + isbn);
+            System.out.println("Da xoa sach co ISBN " + isbn);
             bookDAO.delete(bookToRemove.getBookID());
         } else {
-            System.out.println("❌ Khong tim thay sach co ISBN nay.");
+            System.out.println("Khong tim thay sach co ISBN nay.");
             return ;
         }
     }

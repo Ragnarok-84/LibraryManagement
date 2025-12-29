@@ -52,7 +52,7 @@ public class ReaderDAO extends BaseDAO<Reader> {
     }
 
     // ===============================================================
-    // 1️⃣ CREATE: Thêm độc giả mới
+    // CREATE: Thêm độc giả mới
     // ===============================================================
     public void addReader(Reader reader) {
         final String SQL = "INSERT INTO readers (name, email, phone, address, join_date, active) VALUES (?, ?, ?, ?, ?, ?)";
@@ -69,15 +69,15 @@ public class ReaderDAO extends BaseDAO<Reader> {
 
             int affected = stmt.executeUpdate();
             if (affected > 0) {
-                System.out.println("✅ Thêm độc giả thành công!");
+                System.out.println("Thêm độc giả thành công!");
             }
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi thêm độc giả: " + e.getMessage());
+            System.err.println("Lỗi SQL khi thêm độc giả: " + e.getMessage());
         }
     }
 
     // ===============================================================
-    // 2️⃣ READ: Lấy danh sách tất cả độc giả
+    // READ: Lấy danh sách tất cả độc giả
     // ===============================================================
     public List<Reader> getAllReaders() {
         List<Reader> readers = new ArrayList<>();
@@ -91,13 +91,13 @@ public class ReaderDAO extends BaseDAO<Reader> {
                 readers.add(mapRowToEntity(rs));
             }
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi lấy danh sách độc giả: " + e.getMessage());
+            System.err.println("Lỗi SQL khi lấy danh sách độc giả: " + e.getMessage());
         }
         return readers;
     }
 
     // ===============================================================
-    // 3️⃣ READ: Tìm độc giả theo email hoặc tên
+    // READ: Tìm độc giả theo email hoặc tên
     // ===============================================================
     public List<Reader> searchReaders(String keyword) {
         List<Reader> readers = new ArrayList<>();
@@ -118,13 +118,13 @@ public class ReaderDAO extends BaseDAO<Reader> {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi tìm độc giả: " + e.getMessage());
+            System.err.println("Lỗi SQL khi tìm độc giả: " + e.getMessage());
         }
         return readers;
     }
 
     // ===============================================================
-    // 4️⃣ UPDATE: Cập nhật thông tin độc giả
+    // UPDATE: Cập nhật thông tin độc giả
     // ===============================================================
     public void updateReader(Reader r) {
         String sql = "UPDATE readers SET name=?, email=?, phone=?, address=?, active=? WHERE reader_id=?";
@@ -144,7 +144,7 @@ public class ReaderDAO extends BaseDAO<Reader> {
 
 
     // ===============================================================
-    // 5️⃣ DELETE: Xóa độc giả
+    // DELETE: Xóa độc giả
     // ===============================================================
     public void deleteReader(int readerID) {
         // 1. Khai báo các câu lệnh SQL
@@ -158,7 +158,7 @@ public class ReaderDAO extends BaseDAO<Reader> {
             conn = getConnection();
             if (conn == null) {
                 // Xử lý nếu không lấy được kết nối (tùy chọn ném lỗi hoặc log)
-                System.err.println("❌ Không thể kết nối đến database.");
+                System.err.println("Không thể kết nối đến database.");
                 return;
             }
             conn.setAutoCommit(false); // <-- BẮT ĐẦU TRANSACTION
@@ -183,11 +183,11 @@ public class ReaderDAO extends BaseDAO<Reader> {
 
             // 5. Nếu cả hai lệnh trên thành công, LƯU (commit) transaction
             conn.commit();
-            System.out.println("✅ Đã xóa độc giả và toàn bộ lịch sử mượn thành công (ID=" + readerID + ")");
+            System.out.println("Đã xóa độc giả và toàn bộ lịch sử mượn thành công (ID=" + readerID + ")");
 
         } catch (SQLException e) {
             // 6. Nếu có BẤT KỲ lỗi nào xảy ra, HỦY BỎ (rollback) toàn bộ thay đổi
-            System.err.println("❌ Lỗi SQL khi xóa độc giả, đang rollback... " + e.getMessage());
+            System.err.println("Lỗi SQL khi xóa độc giả, đang rollback... " + e.getMessage());
             if (conn != null) {
                 try {
                     conn.rollback(); // <-- HỦY BỎ TRANSACTION
@@ -223,7 +223,7 @@ public class ReaderDAO extends BaseDAO<Reader> {
             }
 
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi lấy tên độc giả: " + e.getMessage());
+            System.err.println("Lỗi SQL khi lấy tên độc giả: " + e.getMessage());
         }
 
         return "(Không rõ)"; // trả về mặc định nếu không tìm thấy
@@ -262,7 +262,7 @@ public class ReaderDAO extends BaseDAO<Reader> {
                 list.add(mapRowToEntity(rs));
             }
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi khi lấy danh sách đọc giả: " + e.getMessage());
+            System.err.println("Lỗi khi lấy danh sách đọc giả: " + e.getMessage());
         }
         return list;
     }
@@ -282,7 +282,7 @@ public class ReaderDAO extends BaseDAO<Reader> {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return Optional.empty(); // ❌ không tìm thấy
+        return Optional.empty(); // không tìm thấy
     }
 
     @Override
@@ -293,7 +293,7 @@ public class ReaderDAO extends BaseDAO<Reader> {
             stmt.setInt(1, id);
             stmt.executeUpdate();
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi xóa " + getTableName() + ": " + e.getMessage());
+            System.err.println("Lỗi SQL khi xóa " + getTableName() + ": " + e.getMessage());
         }
     }
 
@@ -335,7 +335,7 @@ public class ReaderDAO extends BaseDAO<Reader> {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi thêm độc giả: " + e.getMessage());
+            System.err.println("Lỗi SQL khi thêm độc giả: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -375,7 +375,7 @@ public class ReaderDAO extends BaseDAO<Reader> {
             }
 
         } catch (SQLException e) {
-            System.err.println("❌ Lỗi SQL khi cập nhật độc giả: " + e.getMessage());
+            System.err.println("Lỗi SQL khi cập nhật độc giả: " + e.getMessage());
             e.printStackTrace();
         }
     }
